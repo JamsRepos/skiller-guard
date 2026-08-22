@@ -1,5 +1,6 @@
 package com.skillerguard;
 
+import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.ChatMessageType;
@@ -48,16 +49,20 @@ public class ChangelogService
 		{
 			return;
 		}
-		if (!Changelog.isUnseen(config.seenChangelogVersion()))
+		List<Changelog.Release> unseen = Changelog.unseenSince(config.seenChangelogVersion());
+		if (unseen.isEmpty())
 		{
 			announced = true;
 			return;
 		}
 		announced = true;
-		chat("Skiller Guard " + Changelog.VERSION + " — what's new:");
-		for (String note : Changelog.NOTES)
+		for (Changelog.Release release : unseen)
 		{
-			chat("• " + note);
+			chat("Skiller Guard " + release.version + " — what's new:");
+			for (String note : release.notes)
+			{
+				chat("• " + note);
+			}
 		}
 		configManager.setConfiguration(SkillerGuardConfig.GROUP, SkillerGuardConfig.SEEN_CHANGELOG_VERSION_KEY, Changelog.VERSION);
 	}

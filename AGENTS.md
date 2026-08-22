@@ -58,7 +58,7 @@
 - Do not commit build artifacts — no `.class` files, `out/` directories, or `.tmp` directories.
 - `build.gradle` must target Java 11** and match the structure of the example-plugin template.
 - Retain a permissive license, such as BSD-2.
-- Every release must bump `version` in `build.gradle` and `runelite-plugin.properties`, set `Changelog.VERSION` to the same string, and replace `Changelog.NOTES` with short player-facing bullets for that release. The catalog test fails if those versions drift.
+- Every release must bump `version` in `build.gradle` and `runelite-plugin.properties`, set `Changelog.VERSION` to the same string, and **append** a `Changelog.Release` with short player-facing bullets for that release. Do not delete earlier releases still needed when a Hub PR ships more than one version. The catalog test fails if `VERSION` or the last release drift from the package versions.
 
 ## Resources & Assets
 

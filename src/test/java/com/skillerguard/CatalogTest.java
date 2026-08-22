@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Properties;
 import net.runelite.api.MenuAction;
 import net.runelite.api.Quest;
@@ -355,10 +356,29 @@ public class CatalogTest
 	@Test
 	public void changelogIsOncePerVersion() throws IOException
 	{
-		assertFalse(Changelog.NOTES.isEmpty());
+		assertFalse(Changelog.RELEASES.isEmpty());
+		Changelog.Release latest = Changelog.RELEASES.get(Changelog.RELEASES.size() - 1);
+		assertEquals(Changelog.VERSION, latest.version);
+		assertFalse(latest.notes.isEmpty());
+		for (int i = 1; i < Changelog.RELEASES.size(); i++)
+		{
+			assertTrue(Changelog.compareVersions(
+				Changelog.RELEASES.get(i).version,
+				Changelog.RELEASES.get(i - 1).version) > 0);
+		}
+		assertEquals(Changelog.RELEASES.size(), Changelog.unseenSince("").size());
+		if (Changelog.RELEASES.size() > 1)
+		{
+			List<Changelog.Release> afterFirst =
+				Changelog.unseenSince(Changelog.RELEASES.get(0).version);
+			assertEquals(Changelog.RELEASES.size() - 1, afterFirst.size());
+			assertEquals(Changelog.VERSION, afterFirst.get(afterFirst.size() - 1).version);
+		}
+		assertTrue(Changelog.unseenSince(Changelog.VERSION).isEmpty());
 		assertTrue(Changelog.isUnseen(""));
 		assertTrue(Changelog.isUnseen("1.0.0"));
 		assertFalse(Changelog.isUnseen(Changelog.VERSION));
+		assertTrue(Changelog.compareVersions("1.10.0", "1.9.0") > 0);
 		assertEquals(Changelog.VERSION, pluginPropertyVersion());
 		assertEquals(Changelog.VERSION, gradleVersion());
 	}
