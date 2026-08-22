@@ -6,97 +6,233 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import net.runelite.api.MenuAction;
+import net.runelite.api.Quest;
+import net.runelite.api.gameval.InterfaceID;
+import net.runelite.api.gameval.ItemID;
+import net.runelite.api.gameval.NpcID;
+import net.runelite.api.gameval.ObjectID;
+import net.runelite.api.widgets.WidgetUtil;
 import org.junit.Test;
 
 public class CatalogTest
 {
 	@Test
-	public void buryAndScatterCoverAllRemains()
+	public void bonesAndAshesAreHiddenByItemId()
 	{
-		boolean bury = false;
-		boolean scatter = false;
-		for (SafetyRule rule : SafetyCatalog.rules())
-		{
-			if (rule.matches("Bury", "Dragon bones") && rule.getAction() == SafetyAction.HIDE)
-			{
-				bury = true;
-			}
-			if (rule.matches("Scatter", "Abyssal ashes") && rule.getAction() == SafetyAction.HIDE)
-			{
-				scatter = true;
-			}
-		}
-		assertTrue(bury);
-		assertTrue(scatter);
+		assertEquals(SafetyCategory.PRAYER, SafetyCatalog.hideRule(
+			MenuAction.ITEM_THIRD_OPTION, -1, ItemID.DRAGON_BONES, -1, "Bury").getCategory());
+		assertEquals(SafetyCategory.PRAYER, SafetyCatalog.hideRule(
+			MenuAction.ITEM_THIRD_OPTION, -1, ItemID.ABYSSAL_ASHES, -1, "Scatter").getCategory());
+		assertEquals(SafetyCategory.PRAYER, SafetyCatalog.hideRule(
+			MenuAction.GROUND_ITEM_THIRD_OPTION, -1, ItemID.BONES, -1, "Take").getCategory());
+		assertNull(SafetyCatalog.hideRule(
+			MenuAction.ITEM_THIRD_OPTION, -1, ItemID.DRAGON_BONES, -1, "Drop"));
+		assertNull(SafetyCatalog.hideRule(
+			MenuAction.ITEM_USE, -1, ItemID.BONES, -1, "Use"));
 	}
 
 	@Test
-	public void sarcophagusAndMemoirsAreHidden()
+	public void boneCrossbowIsNotRemains()
 	{
-		boolean sarc = false;
-		boolean memorial = false;
-		for (SafetyRule rule : SafetyCatalog.rules())
-		{
-			if (rule.matches("Open", "Sarcophagus"))
-			{
-				sarc = true;
-				assertEquals(SafetyAction.HIDE, rule.getAction());
-			}
-			if (rule.isAlwaysHide() && rule.matches("Inspect", "Old Memorial"))
-			{
-				memorial = true;
-			}
-		}
-		assertTrue(sarc);
-		assertTrue(memorial);
+		assertFalse(SafetyIds.isRemains(ItemID.DTTD_BONE_CROSSBOW));
+		assertNull(SafetyCatalog.hideRule(
+			MenuAction.ITEM_FIRST_OPTION, -1, ItemID.DTTD_BONE_CROSSBOW, -1, "Wield"));
 	}
 
 	@Test
-	public void walkHereDoesNotMatchPrayerHides()
+	public void offeringBonesUsesAltarObjectIdNotTheWordAltar()
 	{
-		for (SafetyRule rule : SafetyCatalog.rules())
-		{
-			assertFalse("Walk here matched " + rule, rule.matches("Walk here", "Bones"));
-			assertFalse(rule.matches("Cancel", "Bones"));
-		}
+		assertEquals(SafetyCatalog.PRAYER_ALTAR, SafetyCatalog.hideRule(
+			MenuAction.ITEM_USE_ON_GAME_OBJECT, -1, ItemID.BONES, ObjectID.CHAOSALTAR, "Use"));
+		assertEquals(SafetyCatalog.PRAYER_ALTAR, SafetyCatalog.hideRule(
+			MenuAction.ITEM_USE_ON_GAME_OBJECT, -1, -1, ObjectID.POH_ALTAR_GUTHIX_7, "Use"));
+		assertEquals(SafetyCatalog.PRAYER_ALTAR, SafetyCatalog.hideRule(
+			MenuAction.WIDGET_TARGET_ON_GAME_OBJECT, -1, ItemID.DRAGON_BONES, ObjectID.POH_ALTAR_OCCULT, "Use"));
+		assertNull(SafetyCatalog.hideRule(
+			MenuAction.GAME_OBJECT_FIRST_OPTION, -1, -1, ObjectID.POH_ALTAR_GUTHIX_7, "Pray-at"));
+		assertNull(SafetyCatalog.hideRule(
+			MenuAction.GAME_OBJECT_FIRST_OPTION, -1, -1, ObjectID.CHAOSALTAR, "Pray-at"));
 	}
 
 	@Test
-	public void reminisceIsNotHidden()
+	public void skillerPrayerMethodsAreHiddenByObjectId()
 	{
-		for (SafetyRule rule : SafetyCatalog.rules())
-		{
-			assertFalse(rule.matches("Reminisce", "Kharedst's memoirs"));
-		}
+		assertEquals(SafetyCatalog.PRAYER_LIBATION, SafetyCatalog.hideRule(
+			MenuAction.GAME_OBJECT_FIRST_OPTION, -1, -1, ObjectID.VARLAMORE_LIBATION_BOWL_FULL, "Sacrifice"));
+		assertEquals(SafetyCatalog.PRAYER_LIBATION, SafetyCatalog.hideRule(
+			MenuAction.ITEM_USE_ON_GAME_OBJECT, -1, ItemID.BLESSED_BONE_SHARD, ObjectID.VARLAMORE_LIBATION_BOWL, "Use"));
+		assertEquals(SafetyCatalog.PRAYER_LIBATION, SafetyCatalog.hideRule(
+			MenuAction.GAME_OBJECT_FIRST_OPTION, -1, -1, ObjectID.VARLAMORE_LIBATION_BOWL_EMPTY, "Fill"));
+		assertNull(SafetyCatalog.hideRule(
+			MenuAction.GAME_OBJECT_SECOND_OPTION, -1, -1, ObjectID.VARLAMORE_LIBATION_BOWL_FULL, "Check"));
+		assertEquals(SafetyCatalog.PRAYER_LIBATION, SafetyCatalog.hideRule(
+			MenuAction.GAME_OBJECT_FIRST_OPTION, -1, -1, ObjectID.VARLAMORE_PRAYER_ACTIVITY_ALTAR, "Bless"));
+		assertEquals(SafetyCatalog.PRAYER_BONE_BURNER, SafetyCatalog.hideRule(
+			MenuAction.ITEM_USE_ON_GAME_OBJECT, -1, ItemID.DRAGON_BONES, ObjectID.HOSDUN_BONE_BURNER, "Use"));
+		assertNull(SafetyCatalog.hideRule(
+			MenuAction.GAME_OBJECT_FIRST_OPTION, -1, -1, ObjectID.HOSDUN_BONE_BURNER, "Check-Faith"));
+		assertEquals(SafetyCatalog.PRAYER_CAMDOZAAL, SafetyCatalog.hideRule(
+			MenuAction.GAME_OBJECT_FIRST_OPTION, -1, -1, ObjectID.CAMDOZAAL_ALTAR, "Offer-fish"));
+		assertEquals(SafetyCatalog.PRAYER_EGG_SHRINE, SafetyCatalog.hideRule(
+			MenuAction.ITEM_USE_ON_GAME_OBJECT, -1, ItemID.BIRD_EGG_RED, ObjectID.WCGUILD_SHRINE, "Use"));
+		assertEquals(SafetyCatalog.PRAYER_REMAINS, SafetyCatalog.hideRule(
+			MenuAction.ITEM_THIRD_OPTION, -1, ItemID.DORGESH_CONSTRUCTION_BONE, -1, "Bury"));
+		assertEquals(SafetyCatalog.PRAYER_LIBATION, SafetyCatalog.hideRule(
+			MenuAction.ITEM_FIRST_OPTION, -1, ItemID.BLESSED_DRAGON_BONES, -1, "Break-down"));
+		assertEquals(SafetyCatalog.PRAYER_LIBATION, SafetyCatalog.hideRule(
+			MenuAction.ITEM_FIRST_OPTION, -1, ItemID.VARLAMORE_BONE_STATUETTE01, -1, "Break-down"));
+		assertEquals(SafetyCatalog.PRAYER_REMAINS, SafetyCatalog.hideRule(
+			MenuAction.ITEM_THIRD_OPTION, -1, ItemID.NEWBIEBONES, -1, "Bury"));
+		assertEquals(SafetyCatalog.COMBAT_DUMMY, SafetyCatalog.hideRule(
+			MenuAction.GAME_OBJECT_FIRST_OPTION, -1, -1, ObjectID.CIVITAS_COMBAT_DUMMY, "Attack"));
 	}
 
 	@Test
-	public void everyRuleHasAReason()
+	public void sarcophagusAndMemorialAreObjectIds()
 	{
-		for (SafetyRule rule : SafetyCatalog.rules())
-		{
-			assertNotNull(rule.getReason());
-			assertFalse(rule.getReason().isEmpty());
-		}
+		assertEquals(SafetyCatalog.PRAYER_SARCOPHAGUS, SafetyCatalog.hideRule(
+			MenuAction.GAME_OBJECT_FIRST_OPTION, -1, -1, ObjectID.NTK_SARCOPHAGUS, "Open"));
+		assertTrue(SafetyCatalog.hideRule(
+			MenuAction.GAME_OBJECT_FIRST_OPTION, -1, -1, ObjectID.KOURENDWOODLAND_STATUE, "Inspect").isAlwaysHide());
+		assertNull(SafetyCatalog.hideRule(
+			MenuAction.ITEM_FIRST_OPTION, -1, ItemID.VEOS_KHAREDSTS_MEMOIRS, -1, "Reminisce"));
 	}
 
 	@Test
-	public void questNormalizeStripsThe()
+	public void dummyAndCannonUseNpcAndObjectIds()
+	{
+		assertEquals(SafetyCatalog.COMBAT_DUMMY, SafetyCatalog.hideRule(
+			MenuAction.NPC_FIRST_OPTION, NpcID.POH_COMBAT_DUMMY_NPC, -1, -1, "Attack"));
+		assertEquals(SafetyCatalog.COMBAT_CANNON, SafetyCatalog.hideRule(
+			MenuAction.GAME_OBJECT_FIRST_OPTION, -1, -1, ObjectID.DWARF_MULTICANNON1, "Fire"));
+		assertEquals(SafetyCatalog.COMBAT_CANNON, SafetyCatalog.hideRule(
+			MenuAction.ITEM_USE_ON_GAME_OBJECT, -1, -1, ObjectID.DWARF_MULTICANNON1, "Use"));
+		assertNull(SafetyCatalog.hideRule(
+			MenuAction.GAME_OBJECT_SECOND_OPTION, -1, -1, ObjectID.DWARF_MULTICANNON1, "Pick-up"));
+	}
+
+	@Test
+	public void skillerCombatMethodsAreHiddenByObjectId()
+	{
+		assertEquals(SafetyCatalog.COMBAT_DUMMY, SafetyCatalog.hideRule(
+			MenuAction.GAME_OBJECT_FIRST_OPTION, -1, -1, ObjectID.FAI_VARROCK_SWORD_DUMMY, "Attack"));
+		assertEquals(SafetyCatalog.COMBAT_DUMMY, SafetyCatalog.hideRule(
+			MenuAction.GAME_OBJECT_FIRST_OPTION, -1, -1, ObjectID.SWORDDUMMY, "Attack"));
+		assertEquals(SafetyCatalog.COMBAT_DUMMY, SafetyCatalog.hideRule(
+			MenuAction.GAME_OBJECT_FIRST_OPTION, -1, -1, ObjectID.SLUG2_SWORDDUMMY, "Hit"));
+		assertEquals(SafetyCatalog.COMBAT_DUMMY, SafetyCatalog.hideRule(
+			MenuAction.GAME_OBJECT_FIRST_OPTION, -1, -1, ObjectID.KR_CAM_SWORDDUMMY, "Hit"));
+		assertEquals(SafetyCatalog.COMBAT_DUMMY, SafetyCatalog.hideRule(
+			MenuAction.GAME_OBJECT_FIRST_OPTION, -1, -1, ObjectID.BIOHAZARDDUMMY, "Hit"));
+		assertEquals(SafetyCatalog.COMBAT_PUMP, SafetyCatalog.hideRule(
+			MenuAction.GAME_OBJECT_FIRST_OPTION, -1, -1, ObjectID.BLAST_FURNACE_PUMP, "Operate"));
+		assertNull(SafetyCatalog.hideRule(
+			MenuAction.GAME_OBJECT_FIRST_OPTION, -1, -1, ObjectID.BLAST_FURNACE_PEDALS, "Operate"));
+		assertEquals(SafetyCatalog.COMBAT_BARB_FISH, SafetyCatalog.hideRule(
+			MenuAction.NPC_FIRST_OPTION, NpcID._0_39_54_BRUT_FISHING_SPOT, -1, -1, "Use-rod"));
+		assertEquals(SafetyCatalog.COMBAT_BARB_FISH, SafetyCatalog.hideRule(
+			MenuAction.NPC_FIRST_OPTION, NpcID._0_19_55_BRUT_FISHING_SPOT, -1, -1, "Use-rod"));
+		assertEquals(SafetyCatalog.COMBAT_BAREHAND, SafetyCatalog.hideRule(
+			MenuAction.NPC_FIRST_OPTION, NpcID.RAREFISH, -1, -1, "Harpoon", false));
+		assertNull(SafetyCatalog.hideRule(
+			MenuAction.NPC_FIRST_OPTION, NpcID.RAREFISH, -1, -1, "Harpoon", true));
+		assertNull(SafetyCatalog.hideRule(
+			MenuAction.NPC_FIRST_OPTION, NpcID.RAREFISH, -1, -1, "Cage", false));
+		assertEquals(SafetyCatalog.COMBAT_LECTERN, SafetyCatalog.hideRule(
+			MenuAction.GAME_OBJECT_FIRST_OPTION, -1, -1, ObjectID.POH_LECTERN_7, "Study"));
+		assertNull(SafetyCatalog.hideRule(
+			MenuAction.GAME_OBJECT_FIRST_OPTION, -1, -1, ObjectID.POH_LECTERN_7, "Remove"));
+		assertEquals(SafetyCatalog.COMBAT_DARTBOARD, SafetyCatalog.hideRule(
+			MenuAction.GAME_OBJECT_FIRST_OPTION, -1, -1, ObjectID.POH_DARTBOARD1, "Play"));
+		assertNull(SafetyCatalog.hideRule(
+			MenuAction.GAME_OBJECT_FIRST_OPTION, -1, -1, ObjectID.POH_DARTBOARD1, "Remove"));
+	}
+
+	@Test
+	public void combatGatedMethodsAreLeftAlone()
+	{
+		assertNull(SafetyCatalog.hideRule(
+			MenuAction.GAME_OBJECT_FIRST_OPTION, -1, -1, ObjectID.WARGUILD_DUMMY_ACC, "Hit"));
+		assertNull(SafetyCatalog.hideRule(
+			MenuAction.GAME_OBJECT_FIRST_OPTION, -1, -1, ObjectID.WAR_STRENGTH_SHOT22, "Throw"));
+		assertNull(SafetyCatalog.hideRule(
+			MenuAction.GAME_OBJECT_FIRST_OPTION, -1, -1, ObjectID.RANGING_TARGET, "Fire-at"));
+		assertNull(SafetyCatalog.hideRule(
+			MenuAction.GAME_OBJECT_FIRST_OPTION, -1, -1, ObjectID.ARCEUUS_LECTERN, "Study"));
+		assertNull(SafetyCatalog.hideRule(
+			MenuAction.GAME_OBJECT_FIRST_OPTION, -1, -1, ObjectID.II_MAGIC_WHEAT_M, "Push-through"));
+		assertNull(SafetyCatalog.hideRule(
+			MenuAction.GAME_OBJECT_FIRST_OPTION, -1, -1, ObjectID.MAGICTRAINING_COIN_COLLECTOR, "Deposit"));
+		assertNull(SafetyCatalog.hideRule(
+			MenuAction.NPC_FIRST_OPTION, NpcID.WILDERNESS_GWD_BOULDER, -1, -1, "Move"));
+		assertNull(SafetyCatalog.hideRule(
+			MenuAction.ITEM_USE_ON_GAME_OBJECT, -1, ItemID.BONES, ObjectID.AHOY_ECTOFUNTUS, "Use"));
+		assertNull(SafetyCatalog.hideRule(
+			MenuAction.GAME_OBJECT_FIRST_OPTION, -1, -1, ObjectID.TEMPLE_PYRE_BONES_MAGIC, "Light"));
+		assertNull(SafetyCatalog.hideRule(
+			MenuAction.ITEM_USE_ON_GAME_OBJECT, -1, ItemID.VAMPIRE_DUST, ObjectID.HALLOWED_TREASURE_PRAYER_READY, "Use"));
+		assertNull(SafetyCatalog.warnRule(
+			MenuAction.CC_OP, -1, ItemID.BONECRUSHER, "Activity"));
+	}
+
+	@Test
+	public void misclickNpcsAreIdsNotNameGlobs()
+	{
+		assertEquals(SafetyCatalog.NPC_MISCLICK, SafetyCatalog.hideRule(
+			MenuAction.NPC_FIRST_OPTION, NpcID.MAN, -1, -1, "Talk-to"));
+		assertNull(SafetyCatalog.hideRule(
+			MenuAction.EXAMINE_NPC, NpcID.MAN, -1, -1, "Examine"));
+		assertNull(NamedNpcCatalog.labelFor(NpcID.MAN));
+	}
+
+	@Test
+	public void overheadNamedNpcsUseNpcIds()
+	{
+		assertEquals("[SG] Atk+Str XP", NamedNpcCatalog.labelFor(NpcID.TBWT_TAMAYU));
+		assertEquals("[SG] lowest skill", NamedNpcCatalog.labelFor(NpcID.TOG_JUNA_DUMMY));
+		assertNull(NamedNpcCatalog.labelFor(NpcID.MAN));
+		assertNull(NamedNpcCatalog.labelFor(NpcID.WOMAN));
+		assertNull(NamedNpcCatalog.labelFor(NpcID.VM_TIMELINE_HISTORIAN));
+		assertEquals("[SG] Pray XP", NamedNpcCatalog.labelFor(NpcID.VM_INFO_BOOTH_LADY));
+		assertEquals("[SG] Str XP wheat", NamedNpcCatalog.labelFor(NpcID.II_ELNOCK));
+		assertEquals("[SG] Mag XP", NamedObjectCatalog.labelFor(ObjectID.POH_LECTERN_7));
+		assertEquals("[SG] Rng XP", NamedObjectCatalog.labelFor(ObjectID.POH_DARTBOARD1));
+		assertEquals("[SG] Mag XP", NamedObjectCatalog.labelFor(ObjectID.KOURENDWOODLAND_STATUE));
+		assertEquals(SafetyCatalog.XP_TRAP_NPC, SafetyCatalog.warnRule(
+			MenuAction.NPC_FIRST_OPTION, NpcID.II_ELNOCK, -1, "Talk-to"));
+		assertNull(SafetyCatalog.hideRule(
+			MenuAction.NPC_FIRST_OPTION, NpcID.VM_TIMELINE_HISTORIAN, -1, -1, "Talk-to"));
+		assertNull(SafetyCatalog.warnRule(
+			MenuAction.NPC_FIRST_OPTION, NpcID.VM_TIMELINE_HISTORIAN, -1, "Talk-to"));
+		assertEquals(SafetyCatalog.CLERK_PRAYER, SafetyCatalog.warnRule(
+			MenuAction.NPC_FIRST_OPTION, NpcID.VM_INFO_BOOTH_LADY, -1, "Talk-to"));
+	}
+
+	@Test
+	public void walkAndCancelAreMenuActions()
+	{
+		assertTrue(SafetyIds.isWalkOrCancel(MenuAction.WALK));
+		assertTrue(SafetyIds.isWalkOrCancel(MenuAction.CANCEL));
+		assertNull(SafetyCatalog.hideRule(MenuAction.WALK, NpcID.MAN, ItemID.BONES, -1, "Walk here"));
+		assertNull(SafetyCatalog.hideRule(MenuAction.CANCEL, -1, ItemID.BONES, -1, "Cancel"));
+	}
+
+	@Test
+	public void questDenylistUsesQuestEnum()
 	{
 		assertEquals(QuestDenylist.normalize("The Restless Ghost"),
 			QuestDenylist.normalize("Restless Ghost"));
-		assertNotNull(QuestDenylist.reasonForTitle("The Restless Ghost"));
+		assertNotNull(QuestDenylist.reasonFor(Quest.THE_RESTLESS_GHOST));
+		assertNotNull(QuestDenylist.reasonFor(Quest.PRIEST_IN_PERIL));
+		assertEquals("Random Atk, Str, Def, or HP XP", QuestDenylist.reasonFor(Quest.OBSERVATORY_QUEST));
+		assertNotNull(QuestDenylist.reasonFor(Quest.HIS_FAITHFUL_SERVANTS));
+		assertEquals("Mag XP", QuestDenylist.reasonFor(Quest.RECIPE_FOR_DISASTER__LUMBRIDGE_GUIDE));
+		assertNotNull(QuestDenylist.reasonFor(Quest.BARBARIAN_TRAINING));
+		assertNotNull(QuestDenylist.reasonFor(Quest.WATERFALL_QUEST));
 		assertNotNull(QuestDenylist.reasonForTitle("Waterfall Quest"));
+		assertNull(QuestDenylist.reasonFor(Quest.COOKS_ASSISTANT));
 		assertNull(QuestDenylist.reasonForTitle("Cook's Assistant"));
-	}
-
-	@Test
-	public void overheadNamedNpcsOnly()
-	{
-		assertEquals("[SG] Atk+Str XP", NamedNpcCatalog.labelFor("Tamayu"));
-		assertEquals("[SG] lowest skill", NamedNpcCatalog.labelFor("Juna"));
-		assertNull(NamedNpcCatalog.labelFor("Man"));
-		assertNull(NamedNpcCatalog.labelFor("Woman"));
 	}
 
 	@Test
@@ -130,42 +266,38 @@ public class CatalogTest
 	}
 
 	@Test
-	public void combatTrainingHidesSpellbookButNotHomeTeleport()
+	public void spellbookWidgetHidesDestinationsAndBoatWithoutMatchingNames()
 	{
-		boolean windWave = false;
-		boolean alch = false;
-		boolean dummy = false;
-		boolean cannon = false;
-		for (SafetyRule rule : SafetyCatalog.rules())
-		{
-			if (rule.getCategory() != SafetyCategory.COMBAT_TRAINING || rule.getAction() != SafetyAction.HIDE)
-			{
-				continue;
-			}
-			if (rule.matches("Cast", "Wind Wave"))
-			{
-				windWave = true;
-			}
-			if (rule.matches("Cast", "High Level Alchemy"))
-			{
-				alch = true;
-			}
-			if (rule.matches("Attack", "Undead combat dummy"))
-			{
-				dummy = true;
-			}
-			if (rule.matches("Fire", "Dwarf multicannon"))
-			{
-				cannon = true;
-			}
-		}
-		assertTrue(windWave);
-		assertTrue(alch);
-		assertTrue(dummy);
-		assertTrue(cannon);
-		assertTrue(SafetyCatalog.isZeroXpSpell("Home Teleport"));
-		assertTrue(SafetyCatalog.isZeroXpSpell("Lumbridge Home Teleport"));
-		assertFalse(SafetyCatalog.isZeroXpSpell("Wind Strike"));
+		int layer = InterfaceID.MagicSpellbook.SPELLLAYER;
+		int varrock = InterfaceID.MagicSpellbook.VARROCK_TELEPORT;
+		int camelot = InterfaceID.MagicSpellbook.CAMELOT_TELEPORT;
+		int kourend = InterfaceID.MagicSpellbook.KOUREND_TELEPORT;
+		int summonBoat = InterfaceID.MagicSpellbook.TELEPORT_BOAT_TO_ME;
+		int teleportToBoat = InterfaceID.MagicSpellbook.TELEPORT_ME_TO_BOAT;
+		int home = InterfaceID.MagicSpellbook.TELEPORT_HOME_STANDARD;
+		int minigame = InterfaceID.MagicSpellbook.TELEPORT_MINIGAME_STANDARD;
+		int filter = InterfaceID.MagicSpellbook.FILTERBUTTON;
+		int inventory = WidgetUtil.packComponentId(InterfaceID.INVENTORY, 0);
+
+		assertTrue(SafetyCatalog.isSpellbookXpOp(varrock, layer, "Grand Exchange"));
+		assertTrue(SafetyCatalog.isSpellbookXpOp(camelot, layer, "Seers' Village"));
+		assertTrue(SafetyCatalog.isSpellbookXpOp(kourend, layer, "Hosidius"));
+		assertTrue(SafetyCatalog.isSpellbookXpOp(summonBoat, layer, "Summon last boat"));
+		assertTrue(SafetyCatalog.isSpellbookXpOp(summonBoat, layer, "Summon Boat"));
+		assertTrue(SafetyCatalog.isSpellbookXpOp(teleportToBoat, layer, "Last Boat"));
+		assertTrue(SafetyCatalog.isSpellbookXpOp(varrock, layer, "Cast"));
+
+		assertEquals(SafetyCatalog.SpellbookOp.KEEP, SafetyCatalog.spellbookOp(home, layer, "Cast"));
+		assertEquals(SafetyCatalog.SpellbookOp.KEEP, SafetyCatalog.spellbookOp(minigame, layer, "Cast"));
+		assertEquals(SafetyCatalog.SpellbookOp.KEEP, SafetyCatalog.spellbookOp(
+			InterfaceID.MagicSpellbook.TELEPORT_MINIGAME_ANCIENT, layer, "Cast"));
+		assertFalse(SafetyCatalog.isSpellbookXpOp(varrock, layer, "Configure"));
+		assertFalse(SafetyCatalog.isSpellbookXpOp(filter, InterfaceID.MagicSpellbook.BOTTOM, "Filters"));
+		assertFalse(SafetyCatalog.isSpellbookXpOp(inventory, 0, "Break"));
+		assertTrue(SafetyCatalog.isSpellTargetAction(MenuAction.WIDGET_TARGET_ON_NPC));
+		assertTrue(SafetyCatalog.isSpellTargetAction(MenuAction.WIDGET_USE_ON_ITEM));
+		assertFalse(SafetyCatalog.isSpellTargetAction(MenuAction.WIDGET_TARGET_ON_PLAYER));
+		assertFalse(SafetyCatalog.isSpellTargetAction(MenuAction.NPC_FIRST_OPTION));
 	}
 
 	@Test

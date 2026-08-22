@@ -58,25 +58,22 @@ public class NpcWarnOverlay extends Overlay
 			}
 		}
 
-		if (config.xpTrapProtection())
+		for (WorldWarnTracker.ObjectLabel label : tracker.getObjects().values())
 		{
-			for (TileObject memorial : tracker.getMemorials().values())
+			TileObject object = label.object;
+			if (object.getWorldLocation().getPlane() != plane)
 			{
-				if (memorial.getWorldLocation().getPlane() != plane)
-				{
-					continue;
-				}
-				LocalPoint lp = memorial.getLocalLocation();
-				if (lp == null)
-				{
-					continue;
-				}
-				String text = "[SG] Mag XP";
-				net.runelite.api.Point loc = Perspective.getCanvasTextLocation(client, graphics, lp, text, 0);
-				if (loc != null)
-				{
-					OverlayUtil.renderTextLocation(graphics, loc, text, config.npcOverheadColor());
-				}
+				continue;
+			}
+			LocalPoint lp = object.getLocalLocation();
+			if (lp == null)
+			{
+				continue;
+			}
+			net.runelite.api.Point loc = Perspective.getCanvasTextLocation(client, graphics, lp, label.label, 0);
+			if (loc != null)
+			{
+				OverlayUtil.renderTextLocation(graphics, loc, label.label, config.npcOverheadColor());
 			}
 		}
 

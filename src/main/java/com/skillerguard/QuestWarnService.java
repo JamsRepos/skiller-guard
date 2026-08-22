@@ -188,6 +188,10 @@ public class QuestWarnService
 			{
 				continue;
 			}
+			if (QuestDenylist.reasonFor(quest) == null)
+			{
+				continue;
+			}
 			warnTitle(quest.getName());
 		}
 	}

@@ -151,6 +151,7 @@ public class SkillerGuardPlugin extends Plugin
 	{
 		lampLockoutService.onWidgetLoaded(event);
 		questWarnService.onWidgetLoaded(event);
+		menuSafetyService.onWidgetLoaded(event);
 		int group = event.getGroupId();
 		if (group == InterfaceID.SETTINGS
 			|| group == InterfaceID.SETTINGS_SIDE
@@ -222,6 +223,8 @@ public class SkillerGuardPlugin extends Plugin
 		}
 		dangerSettingsService.refresh();
 		lampLockoutService.refresh();
+		clientThread.invoke(() -> menuSafetyService.hideTabletCraftButtons(
+			config.enabled() && config.hideCombatTraining()));
 	}
 
 	@Subscribe

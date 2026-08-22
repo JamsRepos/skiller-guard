@@ -7,6 +7,7 @@ import javax.inject.Singleton;
 import net.runelite.api.Client;
 import net.runelite.api.GameObject;
 import net.runelite.api.NPC;
+import net.runelite.api.ObjectComposition;
 import net.runelite.api.Scene;
 import net.runelite.api.Tile;
 import net.runelite.api.TileObject;
@@ -17,7 +18,6 @@ import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.NpcChanged;
 import net.runelite.api.events.NpcDespawned;
 import net.runelite.api.events.NpcSpawned;
-import net.runelite.api.gameval.ObjectID;
 import net.runelite.api.GameState;
 
 @Singleton
@@ -25,7 +25,7 @@ public class WorldWarnTracker
 {
 	private final Client client;
 	private final Map<Integer, NpcLabel> npcs = new HashMap<>();
-	private final Map<Long, TileObject> memorials = new HashMap<>();
+	private final Map<Long, ObjectLabel> objects = new HashMap<>();
 
 	@Inject
 	WorldWarnTracker(Client client)
@@ -38,9 +38,9 @@ public class WorldWarnTracker
 		return npcs;
 	}
 
-	public Map<Long, TileObject> getMemorials()
+	public Map<Long, ObjectLabel> getObjects()
 	{
-		return memorials;
+		return objects;
 	}
 
 	public void onNpcSpawned(NpcSpawned event)
@@ -60,15 +60,12 @@ public class WorldWarnTracker
 
 	public void onGameObjectSpawned(GameObjectSpawned event)
 	{
-		if (event.getGameObject().getId() == ObjectID.KOURENDWOODLAND_STATUE)
-		{
-			memorials.put(key(event.getGameObject()), event.getGameObject());
-		}
+		track(event.getGameObject());
 	}
 
 	public void onGameObjectDespawned(GameObjectDespawned event)
 	{
-		memorials.remove(key(event.getGameObject()));
+		objects.remove(key(event.getGameObject()));
 	}
 
 	public void onGameStateChanged(GameStateChanged event)
@@ -129,10 +126,7 @@ public class WorldWarnTracker
 				}
 				for (GameObject object : objects)
 				{
-					if (object != null && object.getId() == ObjectID.KOURENDWOODLAND_STATUE)
-					{
-						memorials.put(key(object), object);
-					}
+					track(object);
 				}
 			}
 		}
@@ -141,7 +135,22 @@ public class WorldWarnTracker
 	public void clear()
 	{
 		npcs.clear();
-		memorials.clear();
+		objects.clear();
+	}
+
+	private void track(GameObject object)
+	{
+		if (object == null)
+		{
+			return;
+		}
+		String label = NamedObjectCatalog.labelFor(resolvedObjectId(object.getId()));
+		if (label == null)
+		{
+			objects.remove(key(object));
+			return;
+		}
+		objects.put(key(object), new ObjectLabel(object, label));
 	}
 
 	private void track(NPC npc)
@@ -150,13 +159,34 @@ public class WorldWarnTracker
 		{
 			return;
 		}
-		String label = NamedNpcCatalog.labelFor(npc.getName());
+		String label = NamedNpcCatalog.labelFor(npc.getId());
 		if (label == null)
 		{
 			npcs.remove(npc.getIndex());
 			return;
 		}
 		npcs.put(npc.getIndex(), new NpcLabel(npc, label));
+	}
+
+	private int resolvedObjectId(int id)
+	{
+		try
+		{
+			ObjectComposition def = client.getObjectDefinition(id);
+			if (def != null && def.getImpostorIds() != null)
+			{
+				ObjectComposition impostor = def.getImpostor();
+				if (impostor != null)
+				{
+					return impostor.getId();
+				}
+			}
+		}
+		catch (Exception ignored)
+		{
+			// Impostor lookup needs varbits that are not always present.
+		}
+		return id;
 	}
 
 	private static long key(TileObject object)
@@ -176,6 +206,18 @@ public class WorldWarnTracker
 		NpcLabel(NPC npc, String label)
 		{
 			this.npc = npc;
+			this.label = label;
+		}
+	}
+
+	public static final class ObjectLabel
+	{
+		public final TileObject object;
+		public final String label;
+
+		ObjectLabel(TileObject object, String label)
+		{
+			this.object = object;
 			this.label = label;
 		}
 	}

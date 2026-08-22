@@ -72,7 +72,7 @@ public interface SkillerGuardConfig extends Config
 	@ConfigItem(
 		keyName = "hidePrayerXp",
 		name = "Block Prayer XP",
-		description = "Removes Bury and Scatter on bones or ashes, offering at altars and shrines, taking remains off the ground, worshipping the Ectofuntus, and opening a Pyramid Plunder sarcophagus.",
+		description = "Hides burying, scattering, and offering remains so you cannot get Prayer XP by accident.",
 		section = packsSection,
 		position = 0
 	)
@@ -84,7 +84,7 @@ public interface SkillerGuardConfig extends Config
 	@ConfigItem(
 		keyName = "hideCombatTraining",
 		name = "Block combat training",
-		description = "Removes dummy training, firing a dwarf cannon, and casting spells (almost every spell gives Magic XP). Home Teleport is left alone because it gives no XP.",
+		description = "Hides training methods that grant Attack, Strength, Defence, Ranged, or Magic XP without needing to fight a player.",
 		section = packsSection,
 		position = 1
 	)
@@ -96,7 +96,7 @@ public interface SkillerGuardConfig extends Config
 	@ConfigItem(
 		keyName = "hideNpcMisclicks",
 		name = "Block NPC misclicks",
-		description = "Removes Talk-to, Attack, Pickpocket, and Trick-or-treat on common NPCs such as Man, Woman, Pirate, Mugger, and Rat. Off by default because it can get in the way of normal talking.",
+		description = "Hides Talk-to and Attack on common misclick NPCs. Off by default because it can get in the way of normal talking.",
 		section = packsSection,
 		position = 2
 	)
@@ -108,7 +108,7 @@ public interface SkillerGuardConfig extends Config
 	@ConfigItem(
 		keyName = "xpTrapProtection",
 		name = "Watch for XP traps",
-		description = "Blocks charging Kharedst's memoirs at the Old Memorial (10 Magic XP). Reminisce still works. Right-click warns on Tamayu, Juna, Otto, and reanimation.",
+		description = "Warns on NPCs and items that can dump combat or Prayer XP. Charging Kharedst's memoirs is always blocked.",
 		section = packsSection,
 		position = 3
 	)
@@ -180,7 +180,7 @@ public interface SkillerGuardConfig extends Config
 	@ConfigItem(
 		keyName = "npcOverheadWarnings",
 		name = "NPC labels",
-		description = "Draws a short [SG] label above NPCs who can give combat or Prayer XP if you talk to them (Tamayu, Juna, Otto, and similar). Not Man or Woman.",
+		description = "Draws a short [SG] label above NPCs that can grant combat or Prayer XP if you talk to them.",
 		section = warningsSection,
 		position = 1
 	)

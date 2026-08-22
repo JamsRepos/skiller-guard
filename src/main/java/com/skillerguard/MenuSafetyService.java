@@ -11,17 +11,24 @@ import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.Client;
+import net.runelite.api.Item;
+import net.runelite.api.ItemContainer;
 import net.runelite.api.Menu;
 import net.runelite.api.MenuAction;
 import net.runelite.api.MenuEntry;
 import net.runelite.api.events.MenuOpened;
 import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.api.events.PostMenuSort;
+import net.runelite.api.events.WidgetLoaded;
+import net.runelite.api.gameval.InterfaceID;
+import net.runelite.api.gameval.InventoryID;
 import net.runelite.client.chat.ChatColorType;
 import net.runelite.client.chat.ChatMessageBuilder;
 import net.runelite.client.chat.ChatMessageManager;
 import net.runelite.client.chat.QueuedMessage;
 import net.runelite.api.ChatMessageType;
+import net.runelite.api.ObjectComposition;
+import net.runelite.api.widgets.Widget;
 
 @Singleton
 public class MenuSafetyService
@@ -84,7 +91,7 @@ public class MenuSafetyService
 		{
 			return;
 		}
-		SafetyRule hide = findHide(event.getMenuOption(), event.getMenuTarget());
+		SafetyRule hide = findHide(entry);
 		if (hide != null)
 		{
 			event.consume();
@@ -120,7 +127,7 @@ public class MenuSafetyService
 				kept.add(entry);
 				continue;
 			}
-			if (findHide(entry.getOption(), entry.getTarget()) == null)
+			if (findHide(entry) == null)
 			{
 				kept.add(entry);
 			}
@@ -144,7 +151,7 @@ public class MenuSafetyService
 			{
 				continue;
 			}
-			SafetyRule warn = findWarn(entry.getOption(), entry.getTarget());
+			SafetyRule warn = findWarn(entry);
 			if (warn != null)
 			{
 				reasons.add(warn.getReason());
@@ -171,7 +178,7 @@ public class MenuSafetyService
 		{
 			return true;
 		}
-		return MenuMatcher.isProtectedOption(entry.getOption());
+		return SafetyIds.isWalkOrCancel(entry.getType()) || SafetyIds.isExamine(entry.getType());
 	}
 
 	private boolean isPlayerEntry(MenuEntry entry)
@@ -193,41 +200,135 @@ public class MenuSafetyService
 			|| type == MenuAction.ITEM_USE_ON_PLAYER;
 	}
 
-	private SafetyRule findHide(String option, String target)
+	private SafetyRule findHide(MenuEntry entry)
 	{
-		for (SafetyRule rule : SafetyCatalog.rules())
+		if (entry == null)
 		{
-			if (!packEnabled(rule) || !shouldHide(rule) || !rule.matches(option, target))
+			return null;
+		}
+		if (config.hideCombatTraining())
+		{
+			switch (SafetyCatalog.spellbookOp(entry))
 			{
-				continue;
+				case HIDE:
+					return SafetyCatalog.SPELLBOOK_HIDE;
+				case KEEP:
+					return null;
+				default:
+					break;
 			}
-			if ("Cast".equalsIgnoreCase(MenuMatcher.strip(option)) && SafetyCatalog.isZeroXpSpell(target))
+			if (SafetyCatalog.isSpellTargetAction(entry.getType())
+				&& SafetyCatalog.spellbookOp(client.getSelectedWidget()) == SafetyCatalog.SpellbookOp.HIDE)
 			{
-				continue;
+				return SafetyCatalog.SPELLBOOK_HIDE;
 			}
-			return rule;
+			if (SafetyCatalog.isTabletCraftXpOp(entry.getWidget()))
+			{
+				return SafetyCatalog.COMBAT_LECTERN;
+			}
+		}
+		SafetyRule hide = SafetyCatalog.hideRule(
+			entry, selectedItemId(), resolvedObjectId(entry), hasHarpoon());
+		if (hide != null && packEnabled(hide) && shouldHide(hide))
+		{
+			return hide;
 		}
 		return null;
 	}
 
-	private SafetyRule findWarn(String option, String target)
+	public void onWidgetLoaded(WidgetLoaded event)
 	{
-		for (SafetyRule rule : SafetyCatalog.rules())
+		if (event.getGroupId() != InterfaceID.TELETABS_CRAFT_IF)
 		{
-			if (!packEnabled(rule) || !rule.matches(option, target))
+			return;
+		}
+		hideTabletCraftButtons(activation.isActive() && config.hideCombatTraining());
+	}
+
+	public void hideTabletCraftButtons(boolean hide)
+	{
+		for (int componentId : SafetyCatalog.tabletCraftWidgets())
+		{
+			Widget widget = client.getWidget(componentId);
+			if (widget != null)
 			{
-				continue;
-			}
-			if (shouldHide(rule))
-			{
-				continue;
-			}
-			if (rule.getAction() == SafetyAction.WARN || rule.getCategory() == SafetyCategory.XP_TRAP)
-			{
-				return rule;
+				widget.setHidden(hide);
 			}
 		}
-		return null;
+	}
+
+	private boolean hasHarpoon()
+	{
+		return containsHarpoon(client.getItemContainer(InventoryID.INV))
+			|| containsHarpoon(client.getItemContainer(InventoryID.WORN));
+	}
+
+	private static boolean containsHarpoon(ItemContainer container)
+	{
+		if (container == null)
+		{
+			return false;
+		}
+		for (Item item : container.getItems())
+		{
+			if (item != null && SafetyIds.isHarpoon(item.getId()))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private int selectedItemId()
+	{
+		Widget widget = client.getSelectedWidget();
+		if (widget == null)
+		{
+			return -1;
+		}
+		return widget.getItemId();
+	}
+
+	/**
+	 * POH furniture is often a hotspot whose real altar id is the impostor.
+	 */
+	private int resolvedObjectId(MenuEntry entry)
+	{
+		MenuAction type = entry.getType();
+		if (!SafetyIds.isObjectOp(type)
+			&& type != MenuAction.ITEM_USE_ON_GAME_OBJECT
+			&& type != MenuAction.WIDGET_TARGET_ON_GAME_OBJECT)
+		{
+			return -1;
+		}
+		int id = entry.getIdentifier();
+		try
+		{
+			ObjectComposition def = client.getObjectDefinition(id);
+			if (def != null && def.getImpostorIds() != null)
+			{
+				ObjectComposition impostor = def.getImpostor();
+				if (impostor != null)
+				{
+					return impostor.getId();
+				}
+			}
+		}
+		catch (Exception ignored)
+		{
+			// Impostor lookup needs varbits that are not always present.
+		}
+		return id;
+	}
+
+	private SafetyRule findWarn(MenuEntry entry)
+	{
+		SafetyRule warn = SafetyCatalog.warnRule(entry);
+		if (warn == null || !packEnabled(warn) || shouldHide(warn))
+		{
+			return null;
+		}
+		return warn;
 	}
 
 	private boolean shouldHide(SafetyRule rule)
@@ -288,5 +389,6 @@ public class MenuSafetyService
 	void reset()
 	{
 		lastWarn.clear();
+		hideTabletCraftButtons(false);
 	}
 }

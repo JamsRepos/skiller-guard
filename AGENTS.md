@@ -22,7 +22,10 @@
 
 ## API Usage
 
-- Use `net.runelite.api.gameval` package constants — `ItemID`, `InterfaceID`, `ObjectID`, etc. Never hardcode magic numbers when gameval constants can be used instead.
+- Use `net.runelite.api.gameval` package constants — `ItemID`, `NpcID`, `ObjectID`, `InterfaceID`, etc. Never hardcode magic numbers when gameval constants can be used instead.
+- Identify clicks by ID and RuneLite API (`MenuAction`, `MenuEntry.getNpc()` / `getItemId()` / `getWidget()`, `Quest`, selected widget), not by option/target string matching. Do not glob names like `Man`, `Grand Exchange`, or `*dummy*` when an ID exists.
+- Action verbs (`Bury` vs `Drop`, `Fire` vs `Pickup`, `Configure`) may be used only to pick which op on an already-identified entity, and only when `MenuAction` does not uniquely identify that op.
+- String matching is a last resort when the game has no ID (quest journal widget text, Quest Helper sidebar, chat). Prefer `Quest` enum / `Quest.getName()` over a handwritten title list.
 - Use `LinkBrowser` to open URLs, not `java.awt.Desktop`
 - When looking up Widgets, pass the component ID from gamevals (eg `client.getWidget(InterfaceID.DomEndLevelUi.LOOT_VALUE)`) - do not manually combine interface + component child IDs.
 - Use of Java reflection is forbidden.
