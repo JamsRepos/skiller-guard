@@ -63,8 +63,15 @@ public class DangerSettingsOverlay extends OverlayPanel
 		List<String[]> rows = new ArrayList<>();
 		if (state.hasActiveQuestWarning())
 		{
-			rows.add(new String[]{"[SG] DANGEROUS QUEST", nullToEmpty(state.getQuestWarning())
-				+ ". Close the journal or Quest Helper."});
+			if (state.isQuestDisclaimer())
+			{
+				rows.add(new String[]{"[SG] QUEST DISCLAIMER", nullToEmpty(state.getQuestWarning())});
+			}
+			else
+			{
+				rows.add(new String[]{"[SG] DANGEROUS QUEST", nullToEmpty(state.getQuestWarning())
+					+ ". Close the journal or Quest Helper."});
+			}
 		}
 		if (settings && state.hasActiveBreach())
 		{

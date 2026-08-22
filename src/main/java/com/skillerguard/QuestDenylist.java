@@ -13,6 +13,9 @@ import net.runelite.api.Quest;
  */
 public final class QuestDenylist
 {
+	static final String OBSERVATORY_REASON =
+		"Unsure if 2018 skip is level-1 skill or level-3 account — proceed at your own risk";
+
 	private static final Map<Quest, String> BY_QUEST = buildQuests();
 	private static final Map<String, String> BY_TITLE = buildTitles();
 
@@ -23,6 +26,12 @@ public final class QuestDenylist
 	public static String reasonFor(Quest quest)
 	{
 		return quest == null ? null : BY_QUEST.get(quest);
+	}
+
+	public static boolean isDisclaimerTitle(String title)
+	{
+		return title != null && !title.isEmpty()
+			&& normalize(title).equals(normalize(Quest.OBSERVATORY_QUEST.getName()));
 	}
 
 	public static String reasonForTitle(String title)
@@ -129,7 +138,7 @@ public final class QuestDenylist
 		put(map, Quest.HAUNTED_MINE, "Str XP");
 		put(map, Quest.COLD_WAR, "40 Atk XP if you exit the icelord cage");
 		put(map, Quest.TEARS_OF_GUTHIX, "Awards XP in your lowest skill");
-		put(map, Quest.OBSERVATORY_QUEST, "Random Atk, Str, Def, or HP XP");
+		put(map, Quest.OBSERVATORY_QUEST, OBSERVATORY_REASON);
 		put(map, Quest.BARBARIAN_TRAINING, "Str/Pray XP from Otto's tasks");
 		return Collections.unmodifiableMap(map);
 	}

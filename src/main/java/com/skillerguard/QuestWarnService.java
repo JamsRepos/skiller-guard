@@ -300,16 +300,23 @@ public class QuestWarnService
 			return;
 		}
 		warned.add(key);
+		boolean disclaimer = QuestDenylist.isDisclaimerTitle(cleaned);
 		String message = cleaned + " — " + reason;
 		state.warn(message);
-		state.questAlert(message, Instant.now().plus(BANNER_HOLD));
+		state.questAlert(message, Instant.now().plus(BANNER_HOLD), disclaimer);
 		dangerSettingsService.playConfiguredSound();
 
-		String header = "[SG] DANGEROUS QUEST: " + cleaned;
-		String body = "This quest gives combat or Prayer XP (" + reason
-			+ "). Close the journal or Quest Helper — finishing it can ruin a skiller.";
-		chat(header);
-		chat(body);
+		if (disclaimer)
+		{
+			chat("[SG] QUEST DISCLAIMER: " + cleaned);
+			chat(reason + ".");
+		}
+		else
+		{
+			chat("[SG] DANGEROUS QUEST: " + cleaned);
+			chat("This quest gives combat or Prayer XP (" + reason
+				+ "). Close the journal or Quest Helper — finishing it can ruin a skiller.");
+		}
 	}
 
 	private void chat(String message)

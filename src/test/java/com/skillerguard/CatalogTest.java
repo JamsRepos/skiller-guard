@@ -230,7 +230,10 @@ public class CatalogTest
 			QuestDenylist.normalize("Restless Ghost"));
 		assertNotNull(QuestDenylist.reasonFor(Quest.THE_RESTLESS_GHOST));
 		assertNotNull(QuestDenylist.reasonFor(Quest.PRIEST_IN_PERIL));
-		assertEquals("Random Atk, Str, Def, or HP XP", QuestDenylist.reasonFor(Quest.OBSERVATORY_QUEST));
+		assertEquals(QuestDenylist.OBSERVATORY_REASON, QuestDenylist.reasonFor(Quest.OBSERVATORY_QUEST));
+		assertTrue(QuestDenylist.isDisclaimerTitle("Observatory Quest"));
+		assertTrue(QuestDenylist.isDisclaimerTitle("The Observatory Quest"));
+		assertFalse(QuestDenylist.isDisclaimerTitle("Waterfall Quest"));
 		assertNotNull(QuestDenylist.reasonFor(Quest.HIS_FAITHFUL_SERVANTS));
 		assertEquals("Mag XP", QuestDenylist.reasonFor(Quest.RECIPE_FOR_DISASTER__LUMBRIDGE_GUIDE));
 		assertNotNull(QuestDenylist.reasonFor(Quest.BARBARIAN_TRAINING));

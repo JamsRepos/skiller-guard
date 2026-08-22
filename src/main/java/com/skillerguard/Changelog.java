@@ -8,14 +8,10 @@ import java.util.List;
  */
 final class Changelog
 {
-	static final String VERSION = "1.1.0";
+	static final String VERSION = "1.1.1";
 
 	static final List<String> NOTES = List.of(
-		"House lecterns no longer let you make tablets (Magic XP). Removing the furniture still works.",
-		"House dartboards and other ranging games no longer offer Play (Ranged XP).",
-		"Harpoon is hidden when you would fish barehanded (Strength XP). Cage, Net, and fishing with a harpoon still work.",
-		"More skiller-reachable Prayer and Strength spots are blocked, including the Forthos burner, Varlamore bowl, Blast Furnace pump, and barbarian Use-rod.",
-		"Observatory Quest now warns — it can still give Hitpoints XP."
+		"Observatory Quest is a disclaimer for now: the 2018 skip may be level-1 skill or a level-3 account. Proceed at your own risk."
 	);
 
 	private Changelog()
