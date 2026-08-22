@@ -6,6 +6,11 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Properties;
 import net.runelite.api.MenuAction;
 import net.runelite.api.Quest;
 import net.runelite.api.gameval.InterfaceID;
@@ -342,5 +347,38 @@ public class CatalogTest
 		{
 			frame.dispose();
 		}
+	}
+
+	@Test
+	public void changelogIsOncePerVersion() throws IOException
+	{
+		assertFalse(Changelog.NOTES.isEmpty());
+		assertTrue(Changelog.isUnseen(""));
+		assertTrue(Changelog.isUnseen("1.0.0"));
+		assertFalse(Changelog.isUnseen(Changelog.VERSION));
+		assertEquals(Changelog.VERSION, pluginPropertyVersion());
+		assertEquals(Changelog.VERSION, gradleVersion());
+	}
+
+	private static String pluginPropertyVersion() throws IOException
+	{
+		Properties properties = new Properties();
+		properties.load(Files.newBufferedReader(Path.of("runelite-plugin.properties"), StandardCharsets.UTF_8));
+		return properties.getProperty("version");
+	}
+
+	private static String gradleVersion() throws IOException
+	{
+		for (String line : Files.readAllLines(Path.of("build.gradle"), StandardCharsets.UTF_8))
+		{
+			String trimmed = line.trim();
+			if (trimmed.startsWith("version = '") && trimmed.contains("Changelog.VERSION"))
+			{
+				int start = trimmed.indexOf('\'') + 1;
+				int end = trimmed.indexOf('\'', start);
+				return trimmed.substring(start, end);
+			}
+		}
+		throw new AssertionError("build.gradle is missing version = '...' // Keep Changelog.VERSION");
 	}
 }

@@ -13,6 +13,7 @@ Guard is fail-closed and layered:
 3. **Lock** Attack / Strength / Defence / Hitpoints / Ranged / Magic / Prayer on XP lamps.
 4. **Warn** on combat-XP quest journals and named NPCs (`[SG]` overhead text).
 5. **Alarm** if any of those skills actually gain XP while Guard is active.
+6. **Update notes** once in chat the first time you log in after a new Skiller Guard version.
 
 Walk here, Cancel, and **player** menu entries are never modified.
 

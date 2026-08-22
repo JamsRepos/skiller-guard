@@ -75,6 +75,9 @@ public class SkillerGuardPlugin extends Plugin
 	private WorldWarnTracker worldWarnTracker;
 
 	@Inject
+	private ChangelogService changelogService;
+
+	@Inject
 	private ClientThread clientThread;
 
 	@Inject
@@ -93,6 +96,7 @@ public class SkillerGuardPlugin extends Plugin
 				worldWarnTracker.scanOnce();
 				combatXpAlert.refreshGear();
 				dangerSettingsService.refresh();
+				changelogService.maybeAnnounce();
 			}
 			catch (Exception ex)
 			{
@@ -114,6 +118,7 @@ public class SkillerGuardPlugin extends Plugin
 		questWarnService.reset();
 		combatXpAlert.reset();
 		worldWarnTracker.clear();
+		changelogService.reset();
 		log.info("Skiller Guard stopped");
 	}
 
@@ -182,6 +187,7 @@ public class SkillerGuardPlugin extends Plugin
 		worldWarnTracker.onGameStateChanged(event);
 		questWarnService.onGameStateChanged(event);
 		dangerSettingsService.onGameStateChanged(event);
+		changelogService.onGameStateChanged(event);
 	}
 
 	@Subscribe
