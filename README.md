@@ -31,7 +31,8 @@ Walk here, Cancel, and **player** menu entries are never modified.
 | Block NPC misclicks | **Off** | Talk-to / Attack / Pickpocket / Trick-or-treat on Man, Woman, Pirate, Mugger, Rat |
 | Watch for XP traps | On | Always hides charging Kharedst's memoirs / Book of the dead at the Old Memorial (10 Magic XP per charge). **Reminisce** (teleport) stays. Warns on reanimation, Juna, Tamayu, Otto, Father Aereck, Historian Minas |
 | Lock combat skills on lamps | On | Hides those seven skills on the lamp interface |
-| Quest warnings | On | Warns when you open a combat-XP quest journal, start that quest, or open it in Quest Helper (sidebar or right-click). Also warns if a listed quest is already in progress. The warning is a large on-screen banner, a red chat message, and the warning sound. |
+| Quest warnings | On | Warns when you open a combat-XP quest journal, start that quest, or open it in Quest Helper (sidebar or right-click). The warning is a large on-screen banner, a red chat message, and the warning sound. |
+| Warn for started quests | **Off** | Also warns at login if a listed quest is already in progress. Leave off if you have already started one (for example Recipe for Disaster). |
 | Combat XP alarm | On | Red breach banner + chat + sound if combat/Prayer XP is gained |
 | Warn about dangerous settings | On | Large warning while Auto Retaliate is on, or NPC/player Attack options are not Hidden. You can choose on-screen, sound, or both, and optionally flash the message. |
 | Names above dangerous NPCs | On | `[SG] Prayer XP`-style one-liners on Tamayu, Juna, Historian Minas, Otto Godblessed, Father Aereck, Information clerk — not every Man/Woman |

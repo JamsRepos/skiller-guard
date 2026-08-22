@@ -60,13 +60,13 @@ public interface SkillerGuardConfig extends Config
 	@ConfigItem(
 		keyName = "showStatusOverlay",
 		name = "Show status panel",
-		description = "Shows a small panel so you can see whether Guard is currently protecting you.",
+		description = "Shows a small debug panel with whether Guard is on, plus the last warning. Off by default.",
 		section = generalSection,
 		position = 2
 	)
 	default boolean showStatusOverlay()
 	{
-		return true;
+		return false;
 	}
 
 	@ConfigItem(
@@ -132,7 +132,7 @@ public interface SkillerGuardConfig extends Config
 	@ConfigItem(
 		keyName = "questWarnings",
 		name = "Quest warnings",
-		description = "Warns you when you open a combat-XP quest journal, start that quest, or open it in Quest Helper. Also warns if a listed quest is already in progress.",
+		description = "Warns you when you open a combat-XP quest journal, start that quest, or open it in Quest Helper.",
 		section = packsSection,
 		position = 5
 	)
@@ -142,11 +142,23 @@ public interface SkillerGuardConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "warnInProgressQuests",
+		name = "Warn for started quests",
+		description = "Also warns when you log in if a combat-XP quest is already in progress. Leave this off if you have already started one, such as Recipe for Disaster.",
+		section = packsSection,
+		position = 6
+	)
+	default boolean warnInProgressQuests()
+	{
+		return false;
+	}
+
+	@ConfigItem(
 		keyName = "warnOnCombatXp",
 		name = "Combat XP alarm",
 		description = "If combat or Prayer XP still slips through, this raises a large on-screen alarm, a chat message, and a sound.",
 		section = packsSection,
-		position = 6
+		position = 7
 	)
 	default boolean warnOnCombatXp()
 	{
