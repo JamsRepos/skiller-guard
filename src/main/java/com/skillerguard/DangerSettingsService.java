@@ -6,11 +6,13 @@ import java.util.Locale;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.Client;
+import net.runelite.api.GameState;
 import net.runelite.api.Menu;
 import net.runelite.api.MenuEntry;
 import net.runelite.api.NPC;
 import net.runelite.api.Preferences;
 import net.runelite.api.SoundEffectVolume;
+import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.gameval.VarPlayerID;
 import net.runelite.api.widgets.Widget;
@@ -22,6 +24,7 @@ public class DangerSettingsService
 {
 	/** Hidden is normally the last of the four Attack-option choices. */
 	static final int ATTACK_OPTION_HIDDEN = 3;
+	private static final Duration LOGIN_SILENCE = Duration.ofSeconds(5);
 
 	private final Client client;
 	private final ClientThread clientThread;
@@ -30,6 +33,7 @@ public class DangerSettingsService
 	private final GuardState state;
 	private boolean wasAlerting;
 	private Instant lastSound = Instant.EPOCH;
+	private Instant ignoreSoundUntil = Instant.EPOCH;
 	private Boolean npcAttackFromMenu;
 	private Instant npcMenuAt = Instant.EPOCH;
 
@@ -75,6 +79,19 @@ public class DangerSettingsService
 		refresh();
 	}
 
+	public void onGameStateChanged(GameStateChanged event)
+	{
+		GameState gameState = event.getGameState();
+		if (gameState == GameState.LOGGED_IN || gameState == GameState.HOPPING)
+		{
+			Instant now = Instant.now();
+			ignoreSoundUntil = now.plus(LOGIN_SILENCE);
+			lastSound = now;
+			wasAlerting = true;
+		}
+		refresh();
+	}
+
 	/**
 	 * If a combat NPC is under the cursor, Attack present means options are on;
 	 * Attack missing means they are Hidden.
@@ -116,13 +133,19 @@ public class DangerSettingsService
 			|| state.isPlayerAttackOptionsOn()
 			|| state.isLampCombatOnly();
 		if (!alerting || !activation.isActive() || !config.warnDangerousSettings()
-			|| !config.dangerAlertMode().playSound())
+			|| !config.dangerAlertMode().playSound()
+			|| client.getGameState() != GameState.LOGGED_IN)
 		{
 			wasAlerting = false;
 			return;
 		}
 
 		Instant now = Instant.now();
+		if (now.isBefore(ignoreSoundUntil))
+		{
+			wasAlerting = true;
+			return;
+		}
 		boolean rising = !wasAlerting;
 		int interval = config.dangerSoundInterval();
 		boolean remind = interval > 0

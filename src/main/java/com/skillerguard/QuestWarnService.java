@@ -20,10 +20,12 @@ import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
+import net.runelite.api.GameState;
 import net.runelite.api.MenuEntry;
 import net.runelite.api.Quest;
 import net.runelite.api.QuestState;
 import net.runelite.api.events.ChatMessage;
+import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.MenuOpened;
 import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.api.events.WidgetLoaded;
@@ -39,6 +41,7 @@ import net.runelite.client.util.Text;
 public class QuestWarnService
 {
 	private static final Duration BANNER_HOLD = Duration.ofSeconds(25);
+	private static final Duration LOGIN_SILENCE = Duration.ofSeconds(5);
 	private static final Color CHAT_RED = new Color(255, 40, 40);
 
 	private final Client client;
@@ -49,7 +52,10 @@ public class QuestWarnService
 	private final ChatMessageManager chatMessageManager;
 	private final DangerSettingsService dangerSettingsService;
 	private final Set<String> warned = new HashSet<>();
+	private final Set<String> helperSeen = new HashSet<>();
 	private boolean helperScanQueued;
+	private boolean helperBaselinePending;
+	private Instant ignoreAutoUntil = Instant.EPOCH;
 
 	@Inject
 	QuestWarnService(
@@ -70,9 +76,20 @@ public class QuestWarnService
 		this.dangerSettingsService = dangerSettingsService;
 	}
 
+	public void onGameStateChanged(GameStateChanged event)
+	{
+		GameState gameState = event.getGameState();
+		if (gameState == GameState.LOGGED_IN || gameState == GameState.HOPPING)
+		{
+			ignoreAutoUntil = Instant.now().plus(LOGIN_SILENCE);
+			helperBaselinePending = true;
+			helperSeen.clear();
+		}
+	}
+
 	public void onWidgetLoaded(WidgetLoaded event)
 	{
-		if (!activation.isActive() || !config.questWarnings())
+		if (!activation.isActive() || !config.questWarnings() || isLoginSilence())
 		{
 			return;
 		}
@@ -90,12 +107,15 @@ public class QuestWarnService
 
 	public void onGameTick()
 	{
-		if (!activation.isActive() || !config.questWarnings())
+		if (!activation.isActive() || !config.questWarnings() || isLoginSilence())
 		{
 			return;
 		}
 		checkOpenJournal();
-		checkInProgressQuests();
+		if (config.warnInProgressQuests())
+		{
+			checkInProgressQuests();
+		}
 		checkQuestHelperSidebar();
 	}
 
@@ -172,6 +192,30 @@ public class QuestWarnService
 		}
 	}
 
+	static boolean isQuestAlreadyStarted(Client client, String title)
+	{
+		String key = QuestDenylist.normalize(plainText(title));
+		if (key.isEmpty())
+		{
+			return false;
+		}
+		for (Quest quest : Quest.values())
+		{
+			if (!QuestDenylist.normalize(quest.getName()).equals(key))
+			{
+				continue;
+			}
+			QuestState state = quest.getState(client);
+			return state == QuestState.IN_PROGRESS || state == QuestState.FINISHED;
+		}
+		return false;
+	}
+
+	private boolean isQuestAlreadyStarted(String title)
+	{
+		return isQuestAlreadyStarted(client, title);
+	}
+
 	private void checkQuestHelperSidebar()
 	{
 		if (helperScanQueued)
@@ -184,22 +228,46 @@ public class QuestWarnService
 			try
 			{
 				List<String> titles = findOpenQuestHelperQuests();
-				if (!titles.isEmpty())
-				{
-					clientThread.invoke(() ->
-					{
-						for (String title : titles)
-						{
-							warnTitle(title);
-						}
-					});
-				}
+				clientThread.invoke(() -> applyQuestHelperTitles(titles));
 			}
 			finally
 			{
 				helperScanQueued = false;
 			}
 		});
+	}
+
+	private void applyQuestHelperTitles(List<String> titles)
+	{
+		boolean baseline = helperBaselinePending;
+		for (String title : titles)
+		{
+			String key = QuestDenylist.normalize(plainText(title));
+			if (key.isEmpty())
+			{
+				continue;
+			}
+			if (baseline)
+			{
+				helperSeen.add(key);
+				continue;
+			}
+			if (!helperSeen.add(key))
+			{
+				continue;
+			}
+			if (!config.warnInProgressQuests() && isQuestAlreadyStarted(title))
+			{
+				continue;
+			}
+			warnTitle(title);
+		}
+		helperBaselinePending = false;
+	}
+
+	private boolean isLoginSilence()
+	{
+		return Instant.now().isBefore(ignoreAutoUntil);
 	}
 
 	private void warnTitle(String title)
@@ -356,5 +424,8 @@ public class QuestWarnService
 	void reset()
 	{
 		warned.clear();
+		helperSeen.clear();
+		helperBaselinePending = true;
+		ignoreAutoUntil = Instant.EPOCH;
 	}
 }

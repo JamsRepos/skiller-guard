@@ -179,7 +179,8 @@ public class SkillerGuardPlugin extends Plugin
 	{
 		combatXpAlert.onGameStateChanged(event);
 		worldWarnTracker.onGameStateChanged(event);
-		dangerSettingsService.refresh();
+		questWarnService.onGameStateChanged(event);
+		dangerSettingsService.onGameStateChanged(event);
 	}
 
 	@Subscribe
