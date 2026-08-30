@@ -2,6 +2,7 @@ package com.skillerguard;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.Locale;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -12,6 +13,7 @@ import net.runelite.api.MenuEntry;
 import net.runelite.api.NPC;
 import net.runelite.api.Preferences;
 import net.runelite.api.SoundEffectVolume;
+import net.runelite.api.WorldType;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.gameval.VarPlayerID;
@@ -195,6 +197,12 @@ public class DangerSettingsService
 		return settingValue != ATTACK_OPTION_HIDDEN;
 	}
 
+	/** Official PvP / Deadman worlds always expose Attack on players. */
+	static boolean shouldWarnPlayerAttack(Collection<WorldType> worldTypes)
+	{
+		return worldTypes == null || !WorldType.isPvpWorld(worldTypes);
+	}
+
 	private void observeCurrentMenu()
 	{
 		Menu menu = client.getMenu();
@@ -269,6 +277,10 @@ public class DangerSettingsService
 
 	private boolean isPlayerAttackOptionsOn()
 	{
+		if (!shouldWarnPlayerAttack(client.getWorldType()))
+		{
+			return false;
+		}
 		String[] options = client.getPlayerOptions();
 		if (options == null)
 		{

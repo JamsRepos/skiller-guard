@@ -35,7 +35,7 @@ Walk here, Cancel, and **player** menu entries are never modified.
 | Quest warnings | On | Warns when you open a combat-XP quest journal, start that quest, or open it in Quest Helper (sidebar or right-click). The warning is a large on-screen banner, a red chat message, and the warning sound. |
 | Warn for started quests | **Off** | Also warns at login if a listed quest is already in progress. Leave off if you have already started one (for example Recipe for Disaster). |
 | Combat XP alarm | On | Red breach banner + chat + sound if combat/Prayer XP is gained |
-| Warn about dangerous settings | On | Large warning while Auto Retaliate is on, or NPC/player Attack options are not Hidden. You can choose on-screen, sound, or both, and optionally flash the message. |
+| Warn about dangerous settings | On | Large warning while Auto Retaliate is on, or NPC/player Attack options are not Hidden. Player Attack is not warned on PvP or Deadman worlds. You can choose on-screen, sound, or both, and optionally flash the message. |
 | Names above dangerous NPCs | On | `[SG]` one-liners on Tamayu, Juna, Otto Godblessed, Elnock, Father Aereck, and the museum information clerk — not Historian Minas, and not every Man/Woman |
 
 XP traps such as talking to Tamayu show a `[SG]` line when you **right-click** them, instead of filling the chat while you stand nearby. Clicking the risky option still posts a one-off chat warning. You can also hide those options entirely.

@@ -10,10 +10,12 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Properties;
 import net.runelite.api.MenuAction;
 import net.runelite.api.Quest;
+import net.runelite.api.WorldType;
 import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.gameval.ItemID;
 import net.runelite.api.gameval.NpcID;
@@ -261,6 +263,17 @@ public class CatalogTest
 		assertTrue(DangerSettingsService.attackOptionsOn(0));
 		assertTrue(DangerSettingsService.attackOptionsOn(1));
 		assertTrue(DangerSettingsService.attackOptionsOn(2));
+	}
+
+	@Test
+	public void playerAttackWarningSkipsPvpWorlds()
+	{
+		assertTrue(DangerSettingsService.shouldWarnPlayerAttack(EnumSet.noneOf(WorldType.class)));
+		assertTrue(DangerSettingsService.shouldWarnPlayerAttack(EnumSet.of(WorldType.MEMBERS)));
+		assertFalse(DangerSettingsService.shouldWarnPlayerAttack(EnumSet.of(WorldType.PVP)));
+		assertFalse(DangerSettingsService.shouldWarnPlayerAttack(EnumSet.of(WorldType.DEADMAN)));
+		assertFalse(DangerSettingsService.shouldWarnPlayerAttack(EnumSet.of(WorldType.MEMBERS, WorldType.PVP)));
+		assertTrue(DangerSettingsService.shouldWarnPlayerAttack(null));
 	}
 
 	@Test
