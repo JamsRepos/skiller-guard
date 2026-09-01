@@ -36,7 +36,7 @@ public interface SkillerGuardConfig extends Config
 
 	@ConfigItem(
 		keyName = "enabled",
-		name = "Enable Skiller Guard",
+		name = "Enable Jam's Skiller Guard",
 		description = "Turns the whole plugin on or off. When this is off, Guard does nothing.",
 		section = generalSection,
 		position = 0
@@ -279,7 +279,7 @@ public interface SkillerGuardConfig extends Config
 	@ConfigItem(
 		keyName = SEEN_CHANGELOG_VERSION_KEY,
 		name = "Seen changelog version",
-		description = "Last Skiller Guard version whose update notes were shown in chat.",
+		description = "Last Jam's Skiller Guard version whose update notes were shown in chat.",
 		hidden = true
 	)
 	default String seenChangelogVersion()

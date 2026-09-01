@@ -58,7 +58,7 @@ public class ChangelogService
 		announced = true;
 		for (Changelog.Release release : unseen)
 		{
-			chat("Skiller Guard " + release.version + " — what's new:");
+			chat("Jam's Skiller Guard " + release.version + " — what's new:");
 			for (String note : release.notes)
 			{
 				chat("• " + note);

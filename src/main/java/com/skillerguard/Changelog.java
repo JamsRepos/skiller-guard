@@ -11,7 +11,7 @@ import java.util.List;
  */
 final class Changelog
 {
-	static final String VERSION = "1.1.3";
+	static final String VERSION = "1.1.4";
 
 	static final List<Release> RELEASES = List.of(
 		new Release("1.1.0",
@@ -29,6 +29,9 @@ final class Changelog
 		),
 		new Release("1.1.3",
 			"Player Attack options are no longer warned on PvP or Deadman worlds."
+		),
+		new Release("1.1.4",
+			"Renamed to Jam's Skiller Guard in the plugin panel and Hub."
 		)
 	);
 

@@ -1,4 +1,4 @@
-# Skiller Guard
+# Jam's Skiller Guard
 
 RuneLite plugin that protects level-3 skillers from account-breaking XP. It hides dangerous menu options, locks combat skills on lamps, labels named NPCs, and raises a large on-screen alarm if combat XP still slips through.
 
@@ -13,13 +13,13 @@ Guard is fail-closed and layered:
 3. **Lock** Attack / Strength / Defence / Hitpoints / Ranged / Magic / Prayer on XP lamps.
 4. **Warn** on combat-XP quest journals and named NPCs (`[SG]` overhead text).
 5. **Alarm** if any of those skills actually gain XP while Guard is active.
-6. **Update notes** in chat the first time you log in after a new Skiller Guard version. If you skipped a version (for example two bumps in one Hub PR), each unseen version is listed oldest first.
+6. **Update notes** in chat the first time you log in after a new Jam's Skiller Guard version. If you skipped a version (for example two bumps in one Hub PR), each unseen version is listed oldest first.
 
 Walk here, Cancel, and **player** menu entries are never modified.
 
 ## Activation
 
-- **Enable Skiller Guard** — turns the whole plugin on or off (on by default).
+- **Enable Jam's Skiller Guard** — turns the whole plugin on or off (on by default).
 - **Always on** — protects you whenever the plugin is enabled (default).
 - **Only if you are a level-3 skiller** — turns on automatically when Hitpoints is 10 or less and Attack, Strength, Defence, Ranged, Magic, and Prayer are 3 or less.
 

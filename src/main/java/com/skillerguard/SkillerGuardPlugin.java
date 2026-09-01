@@ -35,7 +35,7 @@ import net.runelite.client.ui.overlay.OverlayManager;
 
 @Slf4j
 @PluginDescriptor(
-	name = "Skiller Guard",
+	name = "Jam's Skiller Guard",
 	description = "Protects skillers from accidental combat and Prayer XP: hides risky clicks, locks lamps, and warns if XP still slips through",
 	tags = {"skiller", "skillers", "menu", "hide", "prayer", "safety", "level 3", "lamp"}
 )
@@ -104,7 +104,7 @@ public class SkillerGuardPlugin extends Plugin
 			}
 		});
 		lampLockoutService.refresh();
-		log.info("Skiller Guard started");
+		log.info("Jam's Skiller Guard started");
 	}
 
 	@Override
@@ -119,7 +119,7 @@ public class SkillerGuardPlugin extends Plugin
 		combatXpAlert.reset();
 		worldWarnTracker.clear();
 		changelogService.reset();
-		log.info("Skiller Guard stopped");
+		log.info("Jam's Skiller Guard stopped");
 	}
 
 	@Subscribe

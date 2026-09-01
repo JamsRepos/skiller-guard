@@ -30,7 +30,7 @@ public class StatusOverlay extends OverlayPanel
 		this.activation = activation;
 		this.state = state;
 		setPosition(OverlayPosition.TOP_LEFT);
-		addMenuEntry(MenuAction.RUNELITE_OVERLAY_CONFIG, OPTION_CONFIGURE, "Skiller Guard");
+		addMenuEntry(MenuAction.RUNELITE_OVERLAY_CONFIG, OPTION_CONFIGURE, "Jam's Skiller Guard");
 	}
 
 	@Override
@@ -43,7 +43,7 @@ public class StatusOverlay extends OverlayPanel
 
 		boolean active = activation.isActive();
 		panelComponent.getChildren().add(TitleComponent.builder()
-			.text("Skiller Guard")
+			.text("Jam's Skiller Guard")
 			.color(active ? Color.GREEN : Color.GRAY)
 			.build());
 		panelComponent.getChildren().add(LineComponent.builder()
