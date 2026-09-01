@@ -31,7 +31,7 @@ final class Changelog
 			"Player Attack options are no longer warned on PvP or Deadman worlds."
 		),
 		new Release("1.1.4",
-			"Renamed to Jam's Skiller Guard in the plugin panel and Hub."
+			"Renamed from Skiller Guard to Jam's Skiller Guard in the plugin panel and Hub."
 		)
 	);
 
