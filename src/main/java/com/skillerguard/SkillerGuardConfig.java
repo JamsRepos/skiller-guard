@@ -11,7 +11,6 @@ import net.runelite.client.config.Range;
 public interface SkillerGuardConfig extends Config
 {
 	String GROUP = "skiller-guard";
-	String SEEN_CHANGELOG_VERSION_KEY = "seenChangelogVersion";
 
 	@ConfigSection(
 		name = "General",
@@ -274,16 +273,5 @@ public interface SkillerGuardConfig extends Config
 	default int dangerSoundInterval()
 	{
 		return 12;
-	}
-
-	@ConfigItem(
-		keyName = SEEN_CHANGELOG_VERSION_KEY,
-		name = "Seen changelog version",
-		description = "Last Jam's Skiller Guard version whose update notes were shown in chat.",
-		hidden = true
-	)
-	default String seenChangelogVersion()
-	{
-		return "";
 	}
 }
