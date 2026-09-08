@@ -21,6 +21,7 @@ Walk here, Cancel, and **player** menu entries are never modified.
 - **Enable Jam's Skiller Guard** — turns the whole plugin on or off (on by default).
 - **Always on** — protects you whenever the plugin is enabled (default).
 - **Only if you are a level-3 skiller** — turns on automatically when Hitpoints is 10 or less and Attack, Strength, Defence, Ranged, Magic, and Prayer are 3 or less.
+- **Stands down entirely on Seasonal, Deadman, and Quest Speedrunning worlds** (Leagues, Deadman seasons, permanent Deadman worlds, and Speedrunning Worlds) — those use a character separate from your main-game account, so there is nothing for Guard to protect. A plain PvP world is not exempt; that is still your real account. You get a one-time `[SG]` chat notice the first time you log into an exempt world.
 
 ## Protections
 

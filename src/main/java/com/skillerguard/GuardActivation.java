@@ -1,10 +1,12 @@
 package com.skillerguard;
 
+import java.util.Collection;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.Skill;
+import net.runelite.api.WorldType;
 
 @Singleton
 public class GuardActivation
@@ -21,7 +23,7 @@ public class GuardActivation
 
 	public boolean isActive()
 	{
-		if (!config.enabled() || client.getGameState() != GameState.LOGGED_IN)
+		if (!config.enabled() || client.getGameState() != GameState.LOGGED_IN || isOnExemptWorld())
 		{
 			return false;
 		}
@@ -30,6 +32,26 @@ public class GuardActivation
 			return true;
 		}
 		return isLevel3Account();
+	}
+
+	/** Whether the current world is one Guard does not run on at all. */
+	public boolean isOnExemptWorld()
+	{
+		return isExemptWorld(client.getWorldType());
+	}
+
+	/**
+	 * Seasonal worlds (Leagues, Deadman seasons), Deadman worlds (including permanent ones), and
+	 * Quest Speedrunning worlds all run a character separate from the player's main-game account,
+	 * so nothing there threatens the account Guard protects. A plain PvP world is not exempt:
+	 * that is still the player's real, permanent account.
+	 */
+	static boolean isExemptWorld(Collection<WorldType> worldTypes)
+	{
+		return worldTypes != null
+			&& (worldTypes.contains(WorldType.SEASONAL)
+				|| worldTypes.contains(WorldType.DEADMAN)
+				|| worldTypes.contains(WorldType.QUEST_SPEEDRUNNING));
 	}
 
 	public boolean isLevel3Account()

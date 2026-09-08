@@ -241,6 +241,21 @@ public class CatalogTest
 	}
 
 	@Test
+	public void guardStandsDownOnSeasonalDeadmanAndSpeedrunningWorlds()
+	{
+		assertFalse(GuardActivation.isExemptWorld(EnumSet.noneOf(WorldType.class)));
+		assertFalse(GuardActivation.isExemptWorld(EnumSet.of(WorldType.MEMBERS)));
+		assertTrue(GuardActivation.isExemptWorld(EnumSet.of(WorldType.SEASONAL)));
+		assertTrue(GuardActivation.isExemptWorld(EnumSet.of(WorldType.DEADMAN)));
+		assertTrue(GuardActivation.isExemptWorld(EnumSet.of(WorldType.MEMBERS, WorldType.DEADMAN)));
+		assertTrue(GuardActivation.isExemptWorld(EnumSet.of(WorldType.SEASONAL, WorldType.DEADMAN)));
+		assertTrue(GuardActivation.isExemptWorld(EnumSet.of(WorldType.MEMBERS, WorldType.QUEST_SPEEDRUNNING)));
+		assertFalse(GuardActivation.isExemptWorld(EnumSet.of(WorldType.PVP)));
+		assertFalse(GuardActivation.isExemptWorld(EnumSet.of(WorldType.PVP_ARENA)));
+		assertFalse(GuardActivation.isExemptWorld(null));
+	}
+
+	@Test
 	public void autoLevel3Bounds()
 	{
 		assertTrue(GuardActivation.isLevel3(10, 1, 1, 1, 1, 1, 1));
