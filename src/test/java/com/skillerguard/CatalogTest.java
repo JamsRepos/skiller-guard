@@ -262,12 +262,29 @@ public class CatalogTest
 	@Test
 	public void playerAttackWarningSkipsPvpWorlds()
 	{
-		assertTrue(DangerSettingsService.shouldWarnPlayerAttack(EnumSet.noneOf(WorldType.class)));
-		assertTrue(DangerSettingsService.shouldWarnPlayerAttack(EnumSet.of(WorldType.MEMBERS)));
-		assertFalse(DangerSettingsService.shouldWarnPlayerAttack(EnumSet.of(WorldType.PVP)));
-		assertFalse(DangerSettingsService.shouldWarnPlayerAttack(EnumSet.of(WorldType.DEADMAN)));
-		assertFalse(DangerSettingsService.shouldWarnPlayerAttack(EnumSet.of(WorldType.MEMBERS, WorldType.PVP)));
-		assertTrue(DangerSettingsService.shouldWarnPlayerAttack(null));
+		assertTrue(DangerSettingsService.shouldWarnPlayerAttack(EnumSet.noneOf(WorldType.class), false, -1));
+		assertTrue(DangerSettingsService.shouldWarnPlayerAttack(EnumSet.of(WorldType.MEMBERS), false, -1));
+		assertFalse(DangerSettingsService.shouldWarnPlayerAttack(EnumSet.of(WorldType.PVP), false, -1));
+		assertFalse(DangerSettingsService.shouldWarnPlayerAttack(EnumSet.of(WorldType.DEADMAN), false, -1));
+		assertFalse(DangerSettingsService.shouldWarnPlayerAttack(EnumSet.of(WorldType.MEMBERS, WorldType.PVP), false, -1));
+		assertTrue(DangerSettingsService.shouldWarnPlayerAttack(null, false, -1));
+	}
+
+	@Test
+	public void playerAttackWarningSkipsWilderness()
+	{
+		assertFalse(DangerSettingsService.shouldWarnPlayerAttack(EnumSet.of(WorldType.MEMBERS), true, -1));
+		assertFalse(DangerSettingsService.shouldWarnPlayerAttack(null, true, -1));
+		assertTrue(DangerSettingsService.shouldWarnPlayerAttack(EnumSet.of(WorldType.MEMBERS), false, 12345));
+	}
+
+	@Test
+	public void playerAttackWarningSkipsLmsArenas()
+	{
+		assertFalse(DangerSettingsService.shouldWarnPlayerAttack(EnumSet.of(WorldType.MEMBERS), false, 13658));
+		assertFalse(DangerSettingsService.shouldWarnPlayerAttack(EnumSet.of(WorldType.MEMBERS), false, 14430));
+		assertFalse(DangerSettingsService.shouldWarnPlayerAttack(null, false, 13920));
+		assertTrue(DangerSettingsService.shouldWarnPlayerAttack(EnumSet.of(WorldType.MEMBERS), false, 13657));
 	}
 
 	@Test

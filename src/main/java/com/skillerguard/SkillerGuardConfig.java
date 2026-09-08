@@ -204,7 +204,7 @@ public interface SkillerGuardConfig extends Config
 	@ConfigItem(
 		keyName = "warnDangerousSettings",
 		name = "Dangerous settings",
-		description = "Warns while Auto Retaliate is on, or while NPC/Player Attack options are not Hidden. Player Attack is not warned on PvP or Deadman worlds. Guard cannot change those for you — turn them off in Combat Options and Controls.",
+		description = "Warns while Auto Retaliate is on, or while NPC/Player Attack options are not Hidden. Player Attack is not warned on PvP or Deadman worlds, in the Wilderness (also covers Bounty Hunter), or in Last Man Standing. Guard cannot change those for you — turn them off in Combat Options and Controls.",
 		section = warningsSection,
 		position = 3
 	)
