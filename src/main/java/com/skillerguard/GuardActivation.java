@@ -1,10 +1,12 @@
 package com.skillerguard;
 
+import java.util.Collection;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.Skill;
+import net.runelite.api.WorldType;
 
 @Singleton
 public class GuardActivation
@@ -21,7 +23,7 @@ public class GuardActivation
 
 	public boolean isActive()
 	{
-		if (!config.enabled() || client.getGameState() != GameState.LOGGED_IN)
+		if (!config.enabled() || client.getGameState() != GameState.LOGGED_IN || isOnExemptWorld())
 		{
 			return false;
 		}
@@ -30,6 +32,21 @@ public class GuardActivation
 			return true;
 		}
 		return isLevel3Account();
+	}
+
+	/** Whether the current world is one Guard does not run on at all. */
+	public boolean isOnExemptWorld()
+	{
+		return isExemptWorld(client.getWorldType());
+	}
+
+	/**
+	 * Seasonal worlds (Leagues, Deadman seasons) always reset, so nothing there threatens the
+	 * player's real account; Guard has nothing useful to protect.
+	 */
+	static boolean isExemptWorld(Collection<WorldType> worldTypes)
+	{
+		return worldTypes != null && worldTypes.contains(WorldType.SEASONAL);
 	}
 
 	public boolean isLevel3Account()

@@ -75,6 +75,9 @@ public class SkillerGuardPlugin extends Plugin
 	private WorldWarnTracker worldWarnTracker;
 
 	@Inject
+	private WorldExemptionNotice worldExemptionNotice;
+
+	@Inject
 	private ClientThread clientThread;
 
 	@Inject
@@ -182,6 +185,7 @@ public class SkillerGuardPlugin extends Plugin
 		worldWarnTracker.onGameStateChanged(event);
 		questWarnService.onGameStateChanged(event);
 		dangerSettingsService.onGameStateChanged(event);
+		worldExemptionNotice.onGameStateChanged(event);
 	}
 
 	@Subscribe
