@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Locale;
+import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.Client;
@@ -11,12 +12,15 @@ import net.runelite.api.GameState;
 import net.runelite.api.Menu;
 import net.runelite.api.MenuEntry;
 import net.runelite.api.NPC;
+import net.runelite.api.Player;
 import net.runelite.api.Preferences;
 import net.runelite.api.SoundEffectVolume;
 import net.runelite.api.WorldType;
+import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.gameval.VarPlayerID;
+import net.runelite.api.gameval.VarbitID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.util.Text;
@@ -27,6 +31,15 @@ public class DangerSettingsService
 	/** Hidden is normally the last of the four Attack-option choices. */
 	static final int ATTACK_OPTION_HIDDEN = 3;
 	private static final Duration LOGIN_SILENCE = Duration.ofSeconds(5);
+
+	/**
+	 * Last Man Standing arena regions (Deserted Island, Wild Varrock). LMS has no dedicated
+	 * varbit; RuneLite's own Discord Rich Presence plugin identifies these matches the same way.
+	 */
+	private static final Set<Integer> LMS_REGIONS = Set.of(
+		13658, 13659, 13660, 13914, 13915, 13916,
+		13918, 13919, 13920, 14174, 14175, 14176, 14430, 14431, 14432
+	);
 
 	private final Client client;
 	private final ClientThread clientThread;
@@ -197,9 +210,17 @@ public class DangerSettingsService
 		return settingValue != ATTACK_OPTION_HIDDEN;
 	}
 
-	/** Official PvP / Deadman worlds always expose Attack on players. */
-	static boolean shouldWarnPlayerAttack(Collection<WorldType> worldTypes)
+	/**
+	 * Official PvP / Deadman worlds, the Wilderness (which also covers Bounty Hunter, fought
+	 * within the Wilderness since its 2023 rework), and Last Man Standing arenas always expose
+	 * Attack on players.
+	 */
+	static boolean shouldWarnPlayerAttack(Collection<WorldType> worldTypes, boolean inWilderness, int regionId)
 	{
+		if (inWilderness || LMS_REGIONS.contains(regionId))
+		{
+			return false;
+		}
 		return worldTypes == null || !WorldType.isPvpWorld(worldTypes);
 	}
 
@@ -277,7 +298,7 @@ public class DangerSettingsService
 
 	private boolean isPlayerAttackOptionsOn()
 	{
-		if (!shouldWarnPlayerAttack(client.getWorldType()))
+		if (!shouldWarnPlayerAttack(client.getWorldType(), isInWilderness(), currentRegionId()))
 		{
 			return false;
 		}
@@ -294,5 +315,21 @@ public class DangerSettingsService
 			}
 		}
 		return false;
+	}
+
+	private boolean isInWilderness()
+	{
+		return client.getVarbitValue(VarbitID.INSIDE_WILDERNESS) == 1;
+	}
+
+	private int currentRegionId()
+	{
+		Player localPlayer = client.getLocalPlayer();
+		if (localPlayer == null)
+		{
+			return -1;
+		}
+		WorldPoint point = WorldPoint.fromLocalInstance(client, localPlayer.getLocalLocation());
+		return point == null ? -1 : point.getRegionID();
 	}
 }
