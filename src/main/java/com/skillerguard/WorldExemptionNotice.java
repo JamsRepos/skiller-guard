@@ -10,7 +10,7 @@ import net.runelite.client.chat.ChatMessageBuilder;
 import net.runelite.client.chat.ChatMessageManager;
 import net.runelite.client.chat.QueuedMessage;
 
-/** Tells the player once per login/hop why Guard has stood down on a Seasonal or Deadman world. */
+/** Tells the player once per login/hop why Guard has stood down on an exempt world. */
 @Singleton
 public class WorldExemptionNotice
 {
@@ -34,8 +34,9 @@ public class WorldExemptionNotice
 		{
 			return;
 		}
-		chat("[SG] Guard is off on this world. Seasonal and Deadman worlds use a character separate"
-			+ " from your main account, so there is nothing here for Guard to protect.");
+		chat("[SG] Guard is off on this world. Seasonal, Deadman, and Quest Speedrunning worlds use"
+			+ " a character separate from your main account, so there is nothing here for Guard"
+			+ " to protect.");
 	}
 
 	private void chat(String message)

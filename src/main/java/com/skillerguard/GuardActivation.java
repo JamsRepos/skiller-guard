@@ -41,15 +41,17 @@ public class GuardActivation
 	}
 
 	/**
-	 * Seasonal worlds (Leagues, Deadman seasons) and Deadman worlds (including permanent ones)
-	 * all run a character separate from the player's main-game account, so nothing there
-	 * threatens the account Guard protects. A plain PvP world is not exempt: that is still the
-	 * player's real, permanent account.
+	 * Seasonal worlds (Leagues, Deadman seasons), Deadman worlds (including permanent ones), and
+	 * Quest Speedrunning worlds all run a character separate from the player's main-game account,
+	 * so nothing there threatens the account Guard protects. A plain PvP world is not exempt:
+	 * that is still the player's real, permanent account.
 	 */
 	static boolean isExemptWorld(Collection<WorldType> worldTypes)
 	{
 		return worldTypes != null
-			&& (worldTypes.contains(WorldType.SEASONAL) || worldTypes.contains(WorldType.DEADMAN));
+			&& (worldTypes.contains(WorldType.SEASONAL)
+				|| worldTypes.contains(WorldType.DEADMAN)
+				|| worldTypes.contains(WorldType.QUEST_SPEEDRUNNING));
 	}
 
 	public boolean isLevel3Account()
