@@ -41,12 +41,15 @@ public class GuardActivation
 	}
 
 	/**
-	 * Seasonal worlds (Leagues, Deadman seasons) always reset, so nothing there threatens the
-	 * player's real account; Guard has nothing useful to protect.
+	 * Seasonal worlds (Leagues, Deadman seasons) and Deadman worlds (including permanent ones)
+	 * all run a character separate from the player's main-game account, so nothing there
+	 * threatens the account Guard protects. A plain PvP world is not exempt: that is still the
+	 * player's real, permanent account.
 	 */
 	static boolean isExemptWorld(Collection<WorldType> worldTypes)
 	{
-		return worldTypes != null && worldTypes.contains(WorldType.SEASONAL);
+		return worldTypes != null
+			&& (worldTypes.contains(WorldType.SEASONAL) || worldTypes.contains(WorldType.DEADMAN));
 	}
 
 	public boolean isLevel3Account()

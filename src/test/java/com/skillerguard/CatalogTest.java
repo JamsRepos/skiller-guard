@@ -241,12 +241,15 @@ public class CatalogTest
 	}
 
 	@Test
-	public void guardStandsDownOnSeasonalWorlds()
+	public void guardStandsDownOnSeasonalAndDeadmanWorlds()
 	{
 		assertFalse(GuardActivation.isExemptWorld(EnumSet.noneOf(WorldType.class)));
 		assertFalse(GuardActivation.isExemptWorld(EnumSet.of(WorldType.MEMBERS)));
 		assertTrue(GuardActivation.isExemptWorld(EnumSet.of(WorldType.SEASONAL)));
+		assertTrue(GuardActivation.isExemptWorld(EnumSet.of(WorldType.DEADMAN)));
+		assertTrue(GuardActivation.isExemptWorld(EnumSet.of(WorldType.MEMBERS, WorldType.DEADMAN)));
 		assertTrue(GuardActivation.isExemptWorld(EnumSet.of(WorldType.SEASONAL, WorldType.DEADMAN)));
+		assertFalse(GuardActivation.isExemptWorld(EnumSet.of(WorldType.PVP)));
 		assertFalse(GuardActivation.isExemptWorld(EnumSet.of(WorldType.PVP_ARENA)));
 		assertFalse(GuardActivation.isExemptWorld(null));
 	}
