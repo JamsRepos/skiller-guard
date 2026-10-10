@@ -52,6 +52,13 @@ public final class NamedNpcCatalog
 		{
 			map.put(id, "[SG] Pray XP");
 		}
+		for (XpToggleMinigame minigame : XpToggleMinigame.values())
+		{
+			for (int id : minigame.getToggleNpcs())
+			{
+				map.put(id, XpToggleMinigame.LABEL);
+			}
+		}
 		return Collections.unmodifiableMap(map);
 	}
 }

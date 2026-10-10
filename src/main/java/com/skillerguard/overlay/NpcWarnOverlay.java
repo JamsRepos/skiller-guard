@@ -46,7 +46,8 @@ public class NpcWarnOverlay extends Overlay
 		for (WorldWarnTracker.NpcLabel label : tracker.getNpcs().values())
 		{
 			NPC npc = label.npc;
-			if (npc == null || npc.getName() == null || npc.getWorldLocation().getPlane() != plane)
+			if (npc == null || npc.getName() == null || npc.getWorldLocation().getPlane() != plane
+				|| isSuppressed(label.suppressVarbit))
 			{
 				continue;
 			}
@@ -61,7 +62,7 @@ public class NpcWarnOverlay extends Overlay
 		for (WorldWarnTracker.ObjectLabel label : tracker.getObjects().values())
 		{
 			TileObject object = label.object;
-			if (object.getWorldLocation().getPlane() != plane)
+			if (object.getWorldLocation().getPlane() != plane || isSuppressed(label.suppressVarbit))
 			{
 				continue;
 			}
@@ -78,5 +79,11 @@ public class NpcWarnOverlay extends Overlay
 		}
 
 		return null;
+	}
+
+	/** An XP-toggle label goes away once the player has turned combat XP off. */
+	private boolean isSuppressed(int varbit)
+	{
+		return varbit >= 0 && client.getVarbitValue(varbit) == 1;
 	}
 }

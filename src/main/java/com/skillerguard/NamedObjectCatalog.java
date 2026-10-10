@@ -37,6 +37,13 @@ public final class NamedObjectCatalog
 		{
 			map.put(id, "[SG] Rng XP");
 		}
+		for (XpToggleMinigame minigame : XpToggleMinigame.values())
+		{
+			for (int id : minigame.getToggleObjects())
+			{
+				map.put(id, XpToggleMinigame.LABEL);
+			}
+		}
 		return Collections.unmodifiableMap(map);
 	}
 }
