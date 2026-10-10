@@ -303,6 +303,39 @@ public class CatalogTest
 	}
 
 	@Test
+	public void playerAttackWarningSkipsEmirsArena()
+	{
+		assertFalse(DangerSettingsService.shouldWarnPlayerAttack(EnumSet.of(WorldType.PVP_ARENA), false, -1));
+		assertFalse(DangerSettingsService.shouldWarnPlayerAttack(EnumSet.of(WorldType.MEMBERS), false, 13362));
+	}
+
+	@Test
+	public void playerAttackWarningSkipsXpToggleMinigameArenas()
+	{
+		assertFalse(DangerSettingsService.shouldWarnPlayerAttack(EnumSet.of(WorldType.MEMBERS), false, 9520));
+		assertFalse(DangerSettingsService.shouldWarnPlayerAttack(EnumSet.of(WorldType.MEMBERS), false, 8749));
+		assertFalse(DangerSettingsService.shouldWarnPlayerAttack(EnumSet.of(WorldType.MEMBERS), false, 13130));
+		assertFalse(DangerSettingsService.shouldWarnPlayerAttack(EnumSet.of(WorldType.MEMBERS), false, 9552));
+		// Castle Wars and Soul Wars lobbies do not force Attack, so the warning still applies.
+		assertTrue(DangerSettingsService.shouldWarnPlayerAttack(EnumSet.of(WorldType.MEMBERS), false, 9776));
+		assertTrue(DangerSettingsService.shouldWarnPlayerAttack(EnumSet.of(WorldType.MEMBERS), false, 8748));
+	}
+
+	@Test
+	public void xpToggleNpcsAndPortalsAreLabelled()
+	{
+		assertEquals(XpToggleMinigame.LABEL, NamedNpcCatalog.labelFor(NpcID.CASTLEWARS_JUDGE));
+		assertEquals(XpToggleMinigame.LABEL, NamedNpcCatalog.labelFor(NpcID.SOUL_WARS_NOMAD));
+		assertEquals(XpToggleMinigame.LABEL, NamedNpcCatalog.labelFor(NpcID.TZHAAR_FIGHTPIT_MASTER));
+		assertEquals(XpToggleMinigame.LABEL, NamedObjectCatalog.labelFor(ObjectID.CLANWARS_FFAPORTAL));
+		assertEquals(XpToggleMinigame.LABEL, NamedObjectCatalog.labelFor(ObjectID.CLANWARS_CHALLENGEPORTAL_S));
+		assertEquals(XpToggleMinigame.SOUL_WARS, XpToggleMinigame.forNpc(NpcID.SOUL_WARS_NOMAD_2OP));
+		assertEquals(XpToggleMinigame.CLAN_WARS, XpToggleMinigame.forObject(ObjectID.CLANWARS_FFAPORTAL));
+		assertNull(XpToggleMinigame.forNpc(NpcID.MAN));
+		assertEquals(-1, XpToggleMinigame.CASTLE_WARS.getXpDisabledVarbit());
+	}
+
+	@Test
 	public void dangerAlertModeCanBeVisualSoundOrBoth()
 	{
 		assertTrue(DangerAlertMode.BANNERS.showBanners());

@@ -41,6 +41,9 @@ public class DangerSettingsService
 		13918, 13919, 13920, 14174, 14175, 14176, 14430, 14431, 14432
 	);
 
+	/** Emir's Arena (PvP Arena); fights use preset stats, so no real combat XP is gained. */
+	private static final Set<Integer> EMIRS_ARENA_REGIONS = Set.of(13362, 13363);
+
 	private final Client client;
 	private final ClientThread clientThread;
 	private final SkillerGuardConfig config;
@@ -212,16 +215,20 @@ public class DangerSettingsService
 
 	/**
 	 * Official PvP / Deadman worlds, the Wilderness (which also covers Bounty Hunter, fought
-	 * within the Wilderness since its 2023 rework), and Last Man Standing arenas always expose
-	 * Attack on players.
+	 * within the Wilderness since its 2023 rework), Last Man Standing and Emir's Arena, and the
+	 * arenas of XP-toggle minigames always expose Attack on players.
 	 */
 	static boolean shouldWarnPlayerAttack(Collection<WorldType> worldTypes, boolean inWilderness, int regionId)
 	{
-		if (inWilderness || LMS_REGIONS.contains(regionId))
+		if (inWilderness
+			|| LMS_REGIONS.contains(regionId)
+			|| EMIRS_ARENA_REGIONS.contains(regionId)
+			|| XpToggleMinigame.isArenaRegion(regionId))
 		{
 			return false;
 		}
-		return worldTypes == null || !WorldType.isPvpWorld(worldTypes);
+		return worldTypes == null
+			|| !(WorldType.isPvpWorld(worldTypes) || worldTypes.contains(WorldType.PVP_ARENA));
 	}
 
 	private void observeCurrentMenu()

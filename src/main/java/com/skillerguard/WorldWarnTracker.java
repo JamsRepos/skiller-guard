@@ -144,13 +144,14 @@ public class WorldWarnTracker
 		{
 			return;
 		}
-		String label = NamedObjectCatalog.labelFor(resolvedObjectId(object.getId()));
+		int id = resolvedObjectId(object.getId());
+		String label = NamedObjectCatalog.labelFor(id);
 		if (label == null)
 		{
 			objects.remove(key(object));
 			return;
 		}
-		objects.put(key(object), new ObjectLabel(object, label));
+		objects.put(key(object), new ObjectLabel(object, label, suppressVarbit(XpToggleMinigame.forObject(id))));
 	}
 
 	private void track(NPC npc)
@@ -165,7 +166,7 @@ public class WorldWarnTracker
 			npcs.remove(npc.getIndex());
 			return;
 		}
-		npcs.put(npc.getIndex(), new NpcLabel(npc, label));
+		npcs.put(npc.getIndex(), new NpcLabel(npc, label, suppressVarbit(XpToggleMinigame.forNpc(npc.getId()))));
 	}
 
 	private int resolvedObjectId(int id)
@@ -189,6 +190,11 @@ public class WorldWarnTracker
 		return id;
 	}
 
+	private static int suppressVarbit(XpToggleMinigame minigame)
+	{
+		return minigame == null ? -1 : minigame.getXpDisabledVarbit();
+	}
+
 	private static long key(TileObject object)
 	{
 		WorldPoint wp = object.getWorldLocation();
@@ -202,11 +208,14 @@ public class WorldWarnTracker
 	{
 		public final NPC npc;
 		public final String label;
+		/** Varbit that hides the label once it reads 1, or -1. */
+		public final int suppressVarbit;
 
-		NpcLabel(NPC npc, String label)
+		NpcLabel(NPC npc, String label, int suppressVarbit)
 		{
 			this.npc = npc;
 			this.label = label;
+			this.suppressVarbit = suppressVarbit;
 		}
 	}
 
@@ -214,11 +223,14 @@ public class WorldWarnTracker
 	{
 		public final TileObject object;
 		public final String label;
+		/** Varbit that hides the label once it reads 1, or -1. */
+		public final int suppressVarbit;
 
-		ObjectLabel(TileObject object, String label)
+		ObjectLabel(TileObject object, String label, int suppressVarbit)
 		{
 			this.object = object;
 			this.label = label;
+			this.suppressVarbit = suppressVarbit;
 		}
 	}
 }
