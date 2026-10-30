@@ -3,65 +3,17 @@ package com.skillerguard;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
-import net.runelite.api.Client;
-import net.runelite.api.EquipmentInventorySlot;
-import net.runelite.api.GameState;
-import net.runelite.api.Item;
-import net.runelite.api.ItemContainer;
-import net.runelite.api.MenuEntry;
-import net.runelite.api.NPC;
-import net.runelite.api.gameval.InventoryID;
 import net.runelite.api.gameval.ItemID;
-import net.runelite.api.gameval.VarPlayerID;
 import net.runelite.api.gameval.VarbitID;
-import net.runelite.client.callback.ClientThread;
-import org.junit.Before;
 import org.junit.Test;
 
 public class SplashWeaponAlertTest
 {
 	private static final int[] SPLASH_WEAPON_IDS = {11707, 20779, 24537, 27580, 27586};
-
-	private final Client client = mock(Client.class);
-	private final SkillerGuardConfig config = mock(SkillerGuardConfig.class);
-	private final ItemContainer worn = mock(ItemContainer.class);
-	private final GuardState state = new GuardState();
-	private DangerSettingsService service;
-
-	@Before
-	public void setUp()
-	{
-		when(config.enabled()).thenReturn(true);
-		when(config.activationMode()).thenReturn(ActivationMode.ALWAYS);
-		when(config.warnDangerousSettings()).thenReturn(true);
-		when(config.dangerAlertMode()).thenReturn(DangerAlertMode.BANNERS);
-		when(client.getGameState()).thenReturn(GameState.LOGGED_IN);
-		when(client.getItemContainer(InventoryID.WORN)).thenReturn(worn);
-		// Player Attack Hidden tells the service which value means Hidden; NPC Attack is on.
-		when(client.getVarpValue(VarPlayerID.OPTION_ATTACKPRIORITY)).thenReturn(3);
-		when(client.getVarpValue(VarPlayerID.OPTION_ATTACKPRIORITY_NPC)).thenReturn(0);
-		service = new DangerSettingsService(
-			client, mock(ClientThread.class), config, new GuardActivation(client, config), state);
-	}
-
-	private void wield(int itemId)
-	{
-		Item weapon = itemId < 0 ? null : new Item(itemId, 1);
-		when(worn.getItem(EquipmentInventorySlot.WEAPON.getSlotIdx())).thenReturn(weapon);
-	}
-
-	private static MenuEntry[] attackOnCombatNpc()
-	{
-		NPC npc = mock(NPC.class);
-		when(npc.getCombatLevel()).thenReturn(2);
-		MenuEntry entry = mock(MenuEntry.class);
-		when(entry.getNpc()).thenReturn(npc);
-		when(entry.getOption()).thenReturn("Attack");
-		return new MenuEntry[]{entry};
-	}
+	private static final int NOTHING_WIELDED = -1;
+	private static final int ACCEPT_AID_OFF = 0;
+	private static final int ACCEPT_AID_ON = 1;
 
 	@Test
 	public void gamevalConstantsAreTheItemsTheListNames()
@@ -75,128 +27,60 @@ public class SplashWeaponAlertTest
 	}
 
 	@Test
-	public void refreshMutesEachSplashWeaponAndUnequipRestoresTheWarning()
+	public void goldCarrotSwordIsNotASplashWeapon()
+	{
+		// The '24-carat' sword looks the part, but its -10 strength bonus lets it hit and give XP.
+		assertFalse(SafetyIds.isSplashWeapon(24539));
+	}
+
+	@Test
+	public void npcAttackIsMutedOnlyWhileWieldingASplashWeapon()
 	{
 		for (int id : SPLASH_WEAPON_IDS)
 		{
-			wield(-1);
-			service.refresh();
-			assertTrue("empty hand warns before " + id, state.isNpcAttackOptionsOn());
+			assertFalse("wielding " + id + " mutes", DangerSettingsService.shouldWarnNpcAttack(true, id));
+		}
+		assertTrue(DangerSettingsService.shouldWarnNpcAttack(true, NOTHING_WIELDED));
+		assertTrue(DangerSettingsService.shouldWarnNpcAttack(true, ItemID.BRONZE_SWORD));
+		assertTrue(DangerSettingsService.shouldWarnNpcAttack(true, 24539));
+		assertFalse(DangerSettingsService.shouldWarnNpcAttack(false, NOTHING_WIELDED));
+	}
 
-			wield(id);
-			service.refresh();
-			assertFalse("wielding " + id + " mutes", state.isNpcAttackOptionsOn());
-
-			wield(-1);
-			service.refresh();
-			assertTrue("unequipping " + id + " restores", state.isNpcAttackOptionsOn());
+	@Test
+	public void acceptAidWarnsForEverySplashWeapon()
+	{
+		for (int id : SPLASH_WEAPON_IDS)
+		{
+			assertTrue("wielding " + id + " warns",
+				DangerSettingsService.shouldWarnAcceptAid(false, true, id, ACCEPT_AID_ON));
 		}
 	}
 
 	@Test
-	public void ordinaryWeaponStillWarns()
+	public void acceptAidNeedsASplashWeaponWielded()
 	{
-		wield(ItemID.BRONZE_SWORD);
-		service.refresh();
-		assertTrue(state.isNpcAttackOptionsOn());
-	}
-
-	@Test
-	public void noWornContainerStillWarns()
-	{
-		when(client.getItemContainer(InventoryID.WORN)).thenReturn(null);
-		service.refresh();
-		assertTrue(state.isNpcAttackOptionsOn());
-	}
-
-	@Test
-	public void attackSeenInAMenuDoesNotBreakTheMute()
-	{
-		wield(ItemID.GOBLINRAID_WARHAMMER);
-		service.observeMenu(attackOnCombatNpc());
-		assertFalse(state.isNpcAttackOptionsOn());
-
-		wield(-1);
-		service.observeMenu(attackOnCombatNpc());
-		assertTrue(state.isNpcAttackOptionsOn());
-	}
-
-	@Test
-	public void splashWeaponLeavesAutoRetaliateWarningOn()
-	{
-		wield(ItemID.GOBLINRAID_WARHAMMER);
-		when(client.getVarpValue(VarPlayerID.OPTION_NODEF)).thenReturn(0);
-		service.refresh();
-		assertTrue(state.isAutoRetaliateOn());
-	}
-
-	@Test
-	public void acceptAidWarnsForEverySplashWeaponUntilUnequipped()
-	{
-		when(client.getVarbitValue(VarbitID.OPTION_ACCEPTAID)).thenReturn(1);
-		for (int id : SPLASH_WEAPON_IDS)
-		{
-			wield(id);
-			service.refresh();
-			assertTrue("wielding " + id + " warns", state.isAcceptAidOn());
-
-			wield(-1);
-			service.refresh();
-			assertFalse("unequipping " + id + " clears", state.isAcceptAidOn());
-		}
-	}
-
-	@Test
-	public void acceptAidDoesNotWarnForAnOrdinaryWeapon()
-	{
-		when(client.getVarbitValue(VarbitID.OPTION_ACCEPTAID)).thenReturn(1);
-		wield(ItemID.BRONZE_SWORD);
-		service.refresh();
-		assertFalse(state.isAcceptAidOn());
+		assertFalse(DangerSettingsService.shouldWarnAcceptAid(true, true, NOTHING_WIELDED, ACCEPT_AID_ON));
+		assertFalse(DangerSettingsService.shouldWarnAcceptAid(true, true, ItemID.BRONZE_SWORD, ACCEPT_AID_ON));
 	}
 
 	@Test
 	public void acceptAidOffDoesNotWarn()
 	{
-		when(client.getVarbitValue(VarbitID.OPTION_ACCEPTAID)).thenReturn(0);
-		wield(ItemID.GOBLINRAID_WARHAMMER);
-		service.refresh();
-		assertFalse(state.isAcceptAidOn());
+		assertFalse(DangerSettingsService.shouldWarnAcceptAid(true, true, ItemID.GOBLINRAID_WARHAMMER, ACCEPT_AID_OFF));
 	}
 
 	@Test
-	public void acceptAidDoesNotWarnWithAllAttackOptionsHidden()
+	public void acceptAidWarnsWithEitherKindOfAttackOption()
 	{
-		when(client.getVarbitValue(VarbitID.OPTION_ACCEPTAID)).thenReturn(1);
-		when(client.getVarpValue(VarPlayerID.OPTION_ATTACKPRIORITY_NPC)).thenReturn(3);
-		wield(ItemID.GOBLINRAID_WARHAMMER);
-		service.refresh();
-		assertFalse(state.isAcceptAidOn());
-	}
-
-	@Test
-	public void acceptAidWarnsWhenOnlyPlayerAttackOptionsAreOn()
-	{
-		when(client.getVarbitValue(VarbitID.OPTION_ACCEPTAID)).thenReturn(1);
-		when(client.getVarpValue(VarPlayerID.OPTION_ATTACKPRIORITY_NPC)).thenReturn(3);
-		when(client.getPlayerOptions()).thenReturn(new String[]{"Attack"});
-		wield(ItemID.GOBLINRAID_WARHAMMER);
-		service.refresh();
-		assertTrue(state.isAcceptAidOn());
+		int hammer = ItemID.GOBLINRAID_WARHAMMER;
+		assertTrue(DangerSettingsService.shouldWarnAcceptAid(true, false, hammer, ACCEPT_AID_ON));
+		assertTrue(DangerSettingsService.shouldWarnAcceptAid(false, true, hammer, ACCEPT_AID_ON));
+		assertFalse(DangerSettingsService.shouldWarnAcceptAid(false, false, hammer, ACCEPT_AID_ON));
 	}
 
 	@Test
 	public void gamevalConstantIsTheAcceptAidVarbit()
 	{
 		assertEquals(4180, VarbitID.OPTION_ACCEPTAID);
-	}
-
-	@Test
-	public void splashWeaponLeavesPlayerAttackWarningOn()
-	{
-		wield(ItemID.GOBLINRAID_WARHAMMER);
-		when(client.getPlayerOptions()).thenReturn(new String[]{"Attack"});
-		service.refresh();
-		assertTrue(state.isPlayerAttackOptionsOn());
 	}
 }

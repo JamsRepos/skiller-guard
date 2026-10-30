@@ -484,8 +484,10 @@ final class SafetyIds
 	}
 
 	/**
-	 * Cosmetic weapons with -100 melee bonuses: they always splash, so an accidental Attack on an
-	 * NPC grants no combat XP while one is wielded. Magic and Ranged are not covered by this.
+	 * Cosmetic weapons with -100 attack and strength bonuses: they always splash, so an accidental
+	 * Attack on an NPC grants no combat XP while one is wielded. Magic and Ranged are not covered
+	 * by this. The '24-carat' sword (gold Carrot sword) stays off this list: its -10 strength bonus
+	 * lets it hit.
 	 */
 	static final Set<Integer> SPLASH_WEAPONS = Set.of(
 		ItemID.GOBLINRAID_WARHAMMER,

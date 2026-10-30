@@ -93,7 +93,7 @@ public class DangerSettingsService
 		state.setPlayerAttackOptionsOn(playerAttackOn);
 		state.setNpcAttackOptionsOn(shouldWarnNpcAttack(npcAttackOn, weaponId));
 		state.setAcceptAidOn(shouldWarnAcceptAid(
-			playerAttackOn || npcAttackOn, weaponId, client.getVarbitValue(VarbitID.OPTION_ACCEPTAID) == 1));
+			playerAttackOn, npcAttackOn, weaponId, client.getVarbitValue(VarbitID.OPTION_ACCEPTAID)));
 		notifyAlerts();
 	}
 
@@ -252,9 +252,9 @@ public class DangerSettingsService
 	 * A Soulflame horn's Entice makes the next melee attack always hit, which defeats a splash
 	 * weapon. Outside a few bosses and raids it only reaches players with Accept Aid on.
 	 */
-	static boolean shouldWarnAcceptAid(boolean attackOptionsOn, int weaponId, boolean acceptAidOn)
+	static boolean shouldWarnAcceptAid(boolean playerAttackOn, boolean npcAttackOn, int weaponId, int acceptAidVarbit)
 	{
-		return attackOptionsOn && acceptAidOn && SafetyIds.isSplashWeapon(weaponId);
+		return (playerAttackOn || npcAttackOn) && acceptAidVarbit == 1 && SafetyIds.isSplashWeapon(weaponId);
 	}
 
 	private int wornWeaponId()

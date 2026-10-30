@@ -25,5 +25,5 @@ The in-game per-minigame setting that disables combat XP gain, reached through a
 _Avoid_: XP lock (Guard's own lamp lockout is a different thing)
 
 **Splash weapon**:
-A cosmetic weapon with -100 melee bonuses that can never deal damage, so melee attacks with it grant no combat XP (Cursed goblin hammer, Hunting knife, Carrot sword, Festive and Sweet Nutcracker staff). Wielding one mutes only the NPC Attack warning.
+A cosmetic weapon with -100 attack and strength bonuses that can never deal damage, so melee attacks with it grant no combat XP (Cursed goblin hammer, Hunting knife, Carrot sword, Festive and Sweet Nutcracker staff). Wielding one mutes only the NPC Attack warning. The '24-carat' sword (gold Carrot sword) is not one: its -10 strength bonus lets it hit.
 _Avoid_: Safe weapon, no-XP weapon
