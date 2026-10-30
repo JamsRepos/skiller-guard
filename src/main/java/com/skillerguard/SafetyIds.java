@@ -483,6 +483,25 @@ final class SafetyIds
 		return type == MenuAction.WALK || type == MenuAction.CANCEL;
 	}
 
+	/**
+	 * Cosmetic weapons with -100 attack and strength bonuses: they always splash, so an accidental
+	 * Attack on an NPC grants no combat XP while one is wielded. Magic and Ranged are not covered
+	 * by this. The '24-carat' sword (gold Carrot sword) stays off this list: its -10 strength bonus
+	 * lets it hit.
+	 */
+	static final Set<Integer> SPLASH_WEAPONS = Set.of(
+		ItemID.GOBLINRAID_WARHAMMER,
+		ItemID.HW16_REWARD_KNIFE,
+		ItemID.EASTER20_CARROT_SWORD,
+		ItemID.XMAS22_NUTCRACKER_STAFF01,
+		ItemID.XMAS22_NUTCRACKER_STAFF02
+	);
+
+	static boolean isSplashWeapon(int itemId)
+	{
+		return SPLASH_WEAPONS.contains(itemId);
+	}
+
 	static boolean isHarpoon(int itemId)
 	{
 		return HARPOONS.contains(itemId);

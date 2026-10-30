@@ -89,6 +89,10 @@ public class DangerSettingsOverlay extends OverlayPanel
 		{
 			rows.add(new String[]{"[SG] PLAYER ATTACK OPTIONS ARE ON", "Set Player Attack options to Hidden in Controls"});
 		}
+		if (settings && state.isAcceptAidOn())
+		{
+			rows.add(new String[]{"[SG] ACCEPT AID IS ON", "A Soulflame horn can make your splash weapon hit. Turn it off in Settings"});
+		}
 		if (settings && state.isLampCombatOnly())
 		{
 			rows.add(new String[]{"[SG] THIS LAMP IS COMBAT-ONLY", "Do not confirm — it can only go into a combat skill"});

@@ -3,12 +3,16 @@ package com.skillerguard;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.Locale;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.Client;
+import net.runelite.api.EquipmentInventorySlot;
 import net.runelite.api.GameState;
+import net.runelite.api.Item;
+import net.runelite.api.ItemContainer;
 import net.runelite.api.Menu;
 import net.runelite.api.MenuEntry;
 import net.runelite.api.NPC;
@@ -19,6 +23,7 @@ import net.runelite.api.WorldType;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.gameval.InterfaceID;
+import net.runelite.api.gameval.InventoryID;
 import net.runelite.api.gameval.VarPlayerID;
 import net.runelite.api.gameval.VarbitID;
 import net.runelite.api.widgets.Widget;
@@ -28,6 +33,15 @@ import net.runelite.client.util.Text;
 @Singleton
 public class DangerSettingsService
 {
+	enum Warning
+	{
+		AUTO_RETALIATE,
+		NPC_ATTACK,
+		PLAYER_ATTACK,
+		ACCEPT_AID,
+		LAMP_COMBAT_ONLY
+	}
+
 	/** Hidden is normally the last of the four Attack-option choices. */
 	static final int ATTACK_OPTION_HIDDEN = 3;
 	private static final Duration LOGIN_SILENCE = Duration.ofSeconds(5);
@@ -49,7 +63,7 @@ public class DangerSettingsService
 	private final SkillerGuardConfig config;
 	private final GuardActivation activation;
 	private final GuardState state;
-	private boolean wasAlerting;
+	private Set<Warning> knownWarnings = EnumSet.noneOf(Warning.class);
 	private Instant lastSound = Instant.EPOCH;
 	private Instant ignoreSoundUntil = Instant.EPOCH;
 	private Boolean npcAttackFromMenu;
@@ -77,13 +91,19 @@ public class DangerSettingsService
 			state.setAutoRetaliateOn(false);
 			state.setNpcAttackOptionsOn(false);
 			state.setPlayerAttackOptionsOn(false);
+			state.setAcceptAidOn(false);
 			notifyAlerts();
 			return;
 		}
 		observeCurrentMenu();
 		state.setAutoRetaliateOn(isAutoRetaliateOn());
-		state.setPlayerAttackOptionsOn(isPlayerAttackOptionsOn());
-		state.setNpcAttackOptionsOn(isNpcAttackOptionsOn());
+		boolean playerAttackOn = isPlayerAttackOptionsOn();
+		boolean npcAttackOn = isNpcAttackOptionsOn();
+		int weaponId = wornWeaponId();
+		state.setPlayerAttackOptionsOn(playerAttackOn);
+		state.setNpcAttackOptionsOn(shouldWarnNpcAttack(npcAttackOn, weaponId));
+		state.setAcceptAidOn(shouldWarnAcceptAid(
+			playerAttackOn, npcAttackOn, weaponId, client.getVarbitValue(VarbitID.OPTION_ACCEPTAID)));
 		notifyAlerts();
 	}
 
@@ -105,7 +125,7 @@ public class DangerSettingsService
 			Instant now = Instant.now();
 			ignoreSoundUntil = now.plus(LOGIN_SILENCE);
 			lastSound = now;
-			wasAlerting = true;
+			knownWarnings = EnumSet.allOf(Warning.class);
 		}
 		refresh();
 	}
@@ -139,43 +159,78 @@ public class DangerSettingsService
 		{
 			npcAttackFromMenu = sawAttack;
 			npcMenuAt = Instant.now();
-			state.setNpcAttackOptionsOn(sawAttack);
+			state.setNpcAttackOptionsOn(shouldWarnNpcAttack(sawAttack, wornWeaponId()));
 			notifyAlerts();
 		}
 	}
 
 	void notifyAlerts()
 	{
-		boolean alerting = state.isAutoRetaliateOn()
-			|| state.isNpcAttackOptionsOn()
-			|| state.isPlayerAttackOptionsOn()
-			|| state.isLampCombatOnly();
-		if (!alerting || !activation.isActive() || !config.warnDangerousSettings()
+		Set<Warning> warnings = activeWarnings(
+			state.isAutoRetaliateOn(),
+			state.isNpcAttackOptionsOn(),
+			state.isPlayerAttackOptionsOn(),
+			state.isAcceptAidOn(),
+			state.isLampCombatOnly());
+		if (warnings.isEmpty() || !activation.isActive() || !config.warnDangerousSettings()
 			|| !config.dangerAlertMode().playSound()
 			|| client.getGameState() != GameState.LOGGED_IN)
 		{
-			wasAlerting = false;
+			knownWarnings = EnumSet.noneOf(Warning.class);
 			return;
 		}
 
 		Instant now = Instant.now();
 		if (now.isBefore(ignoreSoundUntil))
 		{
-			wasAlerting = true;
+			knownWarnings = warnings;
 			return;
 		}
-		boolean rising = !wasAlerting;
+		boolean newWarning = hasNewWarning(knownWarnings, warnings);
 		int interval = config.dangerSoundInterval();
 		boolean remind = interval > 0
 			&& lastSound != Instant.EPOCH
 			&& Duration.between(lastSound, now).compareTo(Duration.ofSeconds(interval)) >= 0;
-		wasAlerting = true;
-		if (!rising && !remind)
+		knownWarnings = warnings;
+		if (!newWarning && !remind)
 		{
 			return;
 		}
 		lastSound = now;
 		playConfiguredSound();
+	}
+
+	static Set<Warning> activeWarnings(
+		boolean autoRetaliate, boolean npcAttack, boolean playerAttack, boolean acceptAid, boolean lampCombatOnly)
+	{
+		Set<Warning> warnings = EnumSet.noneOf(Warning.class);
+		if (autoRetaliate)
+		{
+			warnings.add(Warning.AUTO_RETALIATE);
+		}
+		if (npcAttack)
+		{
+			warnings.add(Warning.NPC_ATTACK);
+		}
+		if (playerAttack)
+		{
+			warnings.add(Warning.PLAYER_ATTACK);
+		}
+		if (acceptAid)
+		{
+			warnings.add(Warning.ACCEPT_AID);
+		}
+		if (lampCombatOnly)
+		{
+			warnings.add(Warning.LAMP_COMBAT_ONLY);
+		}
+		return warnings;
+	}
+
+	/** Equipping or unequipping a splash weapon swaps one warning for another in the same tick. */
+	static boolean hasNewWarning(Set<Warning> known, Set<Warning> current)
+	{
+		return !known.containsAll(current);
 	}
 
 	public void playConfiguredSound()
@@ -229,6 +284,32 @@ public class DangerSettingsService
 		}
 		return worldTypes == null
 			|| !(WorldType.isPvpWorld(worldTypes) || worldTypes.contains(WorldType.PVP_ARENA));
+	}
+
+	/** A wielded splash weapon makes NPC Attack options harmless, so only that warning is muted. */
+	static boolean shouldWarnNpcAttack(boolean optionsOn, int weaponId)
+	{
+		return optionsOn && !SafetyIds.isSplashWeapon(weaponId);
+	}
+
+	/**
+	 * A Soulflame horn's Entice makes the next melee attack always hit, which defeats a splash
+	 * weapon. Outside a few bosses and raids it only reaches players with Accept Aid on.
+	 */
+	static boolean shouldWarnAcceptAid(boolean playerAttackOn, boolean npcAttackOn, int weaponId, int acceptAidVarbit)
+	{
+		return (playerAttackOn || npcAttackOn) && acceptAidVarbit == 1 && SafetyIds.isSplashWeapon(weaponId);
+	}
+
+	private int wornWeaponId()
+	{
+		ItemContainer worn = client.getItemContainer(InventoryID.WORN);
+		if (worn == null)
+		{
+			return -1;
+		}
+		Item weapon = worn.getItem(EquipmentInventorySlot.WEAPON.getSlotIdx());
+		return weapon == null ? -1 : weapon.getId();
 	}
 
 	private void observeCurrentMenu()
