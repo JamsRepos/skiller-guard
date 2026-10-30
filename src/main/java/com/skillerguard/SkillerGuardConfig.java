@@ -204,7 +204,7 @@ public interface SkillerGuardConfig extends Config
 	@ConfigItem(
 		keyName = "warnDangerousSettings",
 		name = "Dangerous settings",
-		description = "Warns while Auto Retaliate is on, or while NPC/Player Attack options are not Hidden. NPC Attack is not warned while you are wielding a splash weapon (Cursed goblin hammer, Hunting knife, Carrot sword, Nutcracker staff). Player Attack is not warned on PvP or Deadman worlds, in the Wilderness (also covers Bounty Hunter), in Last Man Standing or Emir's Arena, or inside Castle Wars, Soul Wars, Clan Wars, or Fight Pit games. Guard cannot change those for you — turn them off in Combat Options and Controls.",
+		description = "Warns while Auto Retaliate is on, or while NPC/Player Attack options are not Hidden. NPC Attack is not warned while you are wielding a splash weapon (Cursed goblin hammer, Hunting knife, Carrot sword, Festive and Sweet Nutcracker staff). While you wield one with Attack options on, Accept Aid also warns, because another player's Soulflame horn can make your next melee attack hit. Player Attack is not warned on PvP or Deadman worlds, in the Wilderness (also covers Bounty Hunter), in Last Man Standing or Emir's Arena, or inside Castle Wars, Soul Wars, Clan Wars, or Fight Pit games. Guard cannot change those for you — turn them off in Combat Options and Controls.",
 		section = warningsSection,
 		position = 3
 	)

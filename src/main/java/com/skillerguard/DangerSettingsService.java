@@ -3,6 +3,7 @@ package com.skillerguard;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.Locale;
 import java.util.Set;
 import javax.inject.Inject;
@@ -32,6 +33,15 @@ import net.runelite.client.util.Text;
 @Singleton
 public class DangerSettingsService
 {
+	enum Warning
+	{
+		AUTO_RETALIATE,
+		NPC_ATTACK,
+		PLAYER_ATTACK,
+		ACCEPT_AID,
+		LAMP_COMBAT_ONLY
+	}
+
 	/** Hidden is normally the last of the four Attack-option choices. */
 	static final int ATTACK_OPTION_HIDDEN = 3;
 	private static final Duration LOGIN_SILENCE = Duration.ofSeconds(5);
@@ -53,7 +63,7 @@ public class DangerSettingsService
 	private final SkillerGuardConfig config;
 	private final GuardActivation activation;
 	private final GuardState state;
-	private boolean wasAlerting;
+	private Set<Warning> knownWarnings = EnumSet.noneOf(Warning.class);
 	private Instant lastSound = Instant.EPOCH;
 	private Instant ignoreSoundUntil = Instant.EPOCH;
 	private Boolean npcAttackFromMenu;
@@ -115,7 +125,7 @@ public class DangerSettingsService
 			Instant now = Instant.now();
 			ignoreSoundUntil = now.plus(LOGIN_SILENCE);
 			lastSound = now;
-			wasAlerting = true;
+			knownWarnings = EnumSet.allOf(Warning.class);
 		}
 		refresh();
 	}
@@ -156,37 +166,71 @@ public class DangerSettingsService
 
 	void notifyAlerts()
 	{
-		boolean alerting = state.isAutoRetaliateOn()
-			|| state.isNpcAttackOptionsOn()
-			|| state.isPlayerAttackOptionsOn()
-			|| state.isAcceptAidOn()
-			|| state.isLampCombatOnly();
-		if (!alerting || !activation.isActive() || !config.warnDangerousSettings()
+		Set<Warning> warnings = activeWarnings(
+			state.isAutoRetaliateOn(),
+			state.isNpcAttackOptionsOn(),
+			state.isPlayerAttackOptionsOn(),
+			state.isAcceptAidOn(),
+			state.isLampCombatOnly());
+		if (warnings.isEmpty() || !activation.isActive() || !config.warnDangerousSettings()
 			|| !config.dangerAlertMode().playSound()
 			|| client.getGameState() != GameState.LOGGED_IN)
 		{
-			wasAlerting = false;
+			knownWarnings = EnumSet.noneOf(Warning.class);
 			return;
 		}
 
 		Instant now = Instant.now();
 		if (now.isBefore(ignoreSoundUntil))
 		{
-			wasAlerting = true;
+			knownWarnings = warnings;
 			return;
 		}
-		boolean rising = !wasAlerting;
+		boolean newWarning = hasNewWarning(knownWarnings, warnings);
 		int interval = config.dangerSoundInterval();
 		boolean remind = interval > 0
 			&& lastSound != Instant.EPOCH
 			&& Duration.between(lastSound, now).compareTo(Duration.ofSeconds(interval)) >= 0;
-		wasAlerting = true;
-		if (!rising && !remind)
+		knownWarnings = warnings;
+		if (!newWarning && !remind)
 		{
 			return;
 		}
 		lastSound = now;
 		playConfiguredSound();
+	}
+
+	static Set<Warning> activeWarnings(
+		boolean autoRetaliate, boolean npcAttack, boolean playerAttack, boolean acceptAid, boolean lampCombatOnly)
+	{
+		Set<Warning> warnings = EnumSet.noneOf(Warning.class);
+		if (autoRetaliate)
+		{
+			warnings.add(Warning.AUTO_RETALIATE);
+		}
+		if (npcAttack)
+		{
+			warnings.add(Warning.NPC_ATTACK);
+		}
+		if (playerAttack)
+		{
+			warnings.add(Warning.PLAYER_ATTACK);
+		}
+		if (acceptAid)
+		{
+			warnings.add(Warning.ACCEPT_AID);
+		}
+		if (lampCombatOnly)
+		{
+			warnings.add(Warning.LAMP_COMBAT_ONLY);
+		}
+		return warnings;
+	}
+
+	/** Equipping or unequipping a splash weapon swaps one warning for another in the same tick. */
+	static boolean hasNewWarning(Set<Warning> known, Set<Warning> current)
+	{
+		return !known.containsAll(current);
 	}
 
 	public void playConfiguredSound()

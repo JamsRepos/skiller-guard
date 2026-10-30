@@ -4,6 +4,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import com.skillerguard.DangerSettingsService.Warning;
+import java.util.EnumSet;
+import java.util.Set;
 import net.runelite.api.gameval.ItemID;
 import net.runelite.api.gameval.VarbitID;
 import org.junit.Test;
@@ -30,7 +33,7 @@ public class SplashWeaponAlertTest
 	public void goldCarrotSwordIsNotASplashWeapon()
 	{
 		// The '24-carat' sword looks the part, but its -10 strength bonus lets it hit and give XP.
-		assertFalse(SafetyIds.isSplashWeapon(24539));
+		assertFalse(SafetyIds.isSplashWeapon(ItemID.EASTER20_CARROT_SWORD_GOLD));
 	}
 
 	@Test
@@ -42,7 +45,7 @@ public class SplashWeaponAlertTest
 		}
 		assertTrue(DangerSettingsService.shouldWarnNpcAttack(true, NOTHING_WIELDED));
 		assertTrue(DangerSettingsService.shouldWarnNpcAttack(true, ItemID.BRONZE_SWORD));
-		assertTrue(DangerSettingsService.shouldWarnNpcAttack(true, 24539));
+		assertTrue(DangerSettingsService.shouldWarnNpcAttack(true, ItemID.EASTER20_CARROT_SWORD_GOLD));
 		assertFalse(DangerSettingsService.shouldWarnNpcAttack(false, NOTHING_WIELDED));
 	}
 
@@ -82,5 +85,43 @@ public class SplashWeaponAlertTest
 	public void gamevalConstantIsTheAcceptAidVarbit()
 	{
 		assertEquals(4180, VarbitID.OPTION_ACCEPTAID);
+	}
+
+	@Test
+	public void swappingOneWarningForAnotherIsANewWarning()
+	{
+		Set<Warning> npc = EnumSet.of(Warning.NPC_ATTACK);
+		Set<Warning> aid = EnumSet.of(Warning.ACCEPT_AID);
+		assertTrue("unequip", DangerSettingsService.hasNewWarning(aid, npc));
+		assertTrue("equip", DangerSettingsService.hasNewWarning(npc, aid));
+		assertTrue("another warning already showing", DangerSettingsService.hasNewWarning(
+			EnumSet.of(Warning.AUTO_RETALIATE), EnumSet.of(Warning.AUTO_RETALIATE, Warning.NPC_ATTACK)));
+		assertTrue("from nothing", DangerSettingsService.hasNewWarning(EnumSet.noneOf(Warning.class), npc));
+	}
+
+	@Test
+	public void unchangedOrClearedWarningsAreNotNew()
+	{
+		Set<Warning> both = EnumSet.of(Warning.AUTO_RETALIATE, Warning.NPC_ATTACK);
+		assertFalse(DangerSettingsService.hasNewWarning(both, both));
+		assertFalse(DangerSettingsService.hasNewWarning(both, EnumSet.of(Warning.NPC_ATTACK)));
+		assertFalse(DangerSettingsService.hasNewWarning(both, EnumSet.noneOf(Warning.class)));
+	}
+
+	@Test
+	public void everyStateFlagMapsToItsWarning()
+	{
+		assertEquals(EnumSet.noneOf(Warning.class),
+			DangerSettingsService.activeWarnings(false, false, false, false, false));
+		assertEquals(EnumSet.of(Warning.AUTO_RETALIATE),
+			DangerSettingsService.activeWarnings(true, false, false, false, false));
+		assertEquals(EnumSet.of(Warning.NPC_ATTACK),
+			DangerSettingsService.activeWarnings(false, true, false, false, false));
+		assertEquals(EnumSet.of(Warning.PLAYER_ATTACK),
+			DangerSettingsService.activeWarnings(false, false, true, false, false));
+		assertEquals(EnumSet.of(Warning.ACCEPT_AID),
+			DangerSettingsService.activeWarnings(false, false, false, true, false));
+		assertEquals(EnumSet.of(Warning.LAMP_COMBAT_ONLY),
+			DangerSettingsService.activeWarnings(false, false, false, false, true));
 	}
 }
