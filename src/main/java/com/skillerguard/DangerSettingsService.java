@@ -81,13 +81,19 @@ public class DangerSettingsService
 			state.setAutoRetaliateOn(false);
 			state.setNpcAttackOptionsOn(false);
 			state.setPlayerAttackOptionsOn(false);
+			state.setAcceptAidOn(false);
 			notifyAlerts();
 			return;
 		}
 		observeCurrentMenu();
 		state.setAutoRetaliateOn(isAutoRetaliateOn());
-		state.setPlayerAttackOptionsOn(isPlayerAttackOptionsOn());
-		state.setNpcAttackOptionsOn(shouldWarnNpcAttack(isNpcAttackOptionsOn(), wornWeaponId()));
+		boolean playerAttackOn = isPlayerAttackOptionsOn();
+		boolean npcAttackOn = isNpcAttackOptionsOn();
+		int weaponId = wornWeaponId();
+		state.setPlayerAttackOptionsOn(playerAttackOn);
+		state.setNpcAttackOptionsOn(shouldWarnNpcAttack(npcAttackOn, weaponId));
+		state.setAcceptAidOn(shouldWarnAcceptAid(
+			playerAttackOn || npcAttackOn, weaponId, client.getVarbitValue(VarbitID.OPTION_ACCEPTAID) == 1));
 		notifyAlerts();
 	}
 
@@ -153,6 +159,7 @@ public class DangerSettingsService
 		boolean alerting = state.isAutoRetaliateOn()
 			|| state.isNpcAttackOptionsOn()
 			|| state.isPlayerAttackOptionsOn()
+			|| state.isAcceptAidOn()
 			|| state.isLampCombatOnly();
 		if (!alerting || !activation.isActive() || !config.warnDangerousSettings()
 			|| !config.dangerAlertMode().playSound()
@@ -239,6 +246,15 @@ public class DangerSettingsService
 	static boolean shouldWarnNpcAttack(boolean optionsOn, int weaponId)
 	{
 		return optionsOn && !SafetyIds.isSplashWeapon(weaponId);
+	}
+
+	/**
+	 * A Soulflame horn's Entice makes the next melee attack always hit, which defeats a splash
+	 * weapon. Outside a few bosses and raids it only reaches players with Accept Aid on.
+	 */
+	static boolean shouldWarnAcceptAid(boolean attackOptionsOn, int weaponId, boolean acceptAidOn)
+	{
+		return attackOptionsOn && acceptAidOn && SafetyIds.isSplashWeapon(weaponId);
 	}
 
 	private int wornWeaponId()

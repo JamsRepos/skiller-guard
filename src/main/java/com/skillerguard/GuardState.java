@@ -21,6 +21,7 @@ public class GuardState
 	private boolean autoRetaliateOn;
 	private boolean npcAttackOptionsOn;
 	private boolean playerAttackOptionsOn;
+	private boolean acceptAidOn;
 	private boolean passivePrayerGear;
 
 	public void warn(String message)

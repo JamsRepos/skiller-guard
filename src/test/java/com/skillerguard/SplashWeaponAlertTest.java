@@ -16,6 +16,7 @@ import net.runelite.api.NPC;
 import net.runelite.api.gameval.InventoryID;
 import net.runelite.api.gameval.ItemID;
 import net.runelite.api.gameval.VarPlayerID;
+import net.runelite.api.gameval.VarbitID;
 import net.runelite.client.callback.ClientThread;
 import org.junit.Before;
 import org.junit.Test;
@@ -127,6 +128,67 @@ public class SplashWeaponAlertTest
 		when(client.getVarpValue(VarPlayerID.OPTION_NODEF)).thenReturn(0);
 		service.refresh();
 		assertTrue(state.isAutoRetaliateOn());
+	}
+
+	@Test
+	public void acceptAidWarnsForEverySplashWeaponUntilUnequipped()
+	{
+		when(client.getVarbitValue(VarbitID.OPTION_ACCEPTAID)).thenReturn(1);
+		for (int id : SPLASH_WEAPON_IDS)
+		{
+			wield(id);
+			service.refresh();
+			assertTrue("wielding " + id + " warns", state.isAcceptAidOn());
+
+			wield(-1);
+			service.refresh();
+			assertFalse("unequipping " + id + " clears", state.isAcceptAidOn());
+		}
+	}
+
+	@Test
+	public void acceptAidDoesNotWarnForAnOrdinaryWeapon()
+	{
+		when(client.getVarbitValue(VarbitID.OPTION_ACCEPTAID)).thenReturn(1);
+		wield(ItemID.BRONZE_SWORD);
+		service.refresh();
+		assertFalse(state.isAcceptAidOn());
+	}
+
+	@Test
+	public void acceptAidOffDoesNotWarn()
+	{
+		when(client.getVarbitValue(VarbitID.OPTION_ACCEPTAID)).thenReturn(0);
+		wield(ItemID.GOBLINRAID_WARHAMMER);
+		service.refresh();
+		assertFalse(state.isAcceptAidOn());
+	}
+
+	@Test
+	public void acceptAidDoesNotWarnWithAllAttackOptionsHidden()
+	{
+		when(client.getVarbitValue(VarbitID.OPTION_ACCEPTAID)).thenReturn(1);
+		when(client.getVarpValue(VarPlayerID.OPTION_ATTACKPRIORITY_NPC)).thenReturn(3);
+		wield(ItemID.GOBLINRAID_WARHAMMER);
+		service.refresh();
+		assertFalse(state.isAcceptAidOn());
+	}
+
+	@Test
+	public void acceptAidWarnsWhenOnlyPlayerAttackOptionsAreOn()
+	{
+		when(client.getVarbitValue(VarbitID.OPTION_ACCEPTAID)).thenReturn(1);
+		when(client.getVarpValue(VarPlayerID.OPTION_ATTACKPRIORITY_NPC)).thenReturn(3);
+		when(client.getPlayerOptions()).thenReturn(new String[]{"Attack"});
+		wield(ItemID.GOBLINRAID_WARHAMMER);
+		service.refresh();
+		assertTrue(state.isAcceptAidOn());
+	}
+
+	@Test
+	public void gamevalConstantIsTheAcceptAidVarbit()
+	{
+		assertEquals(4180, VarbitID.OPTION_ACCEPTAID);
 	}
 
 	@Test
