@@ -483,6 +483,23 @@ final class SafetyIds
 		return type == MenuAction.WALK || type == MenuAction.CANCEL;
 	}
 
+	/**
+	 * Cosmetic weapons with -100 melee bonuses: they always splash, so an accidental Attack on an
+	 * NPC grants no combat XP while one is wielded. Magic and Ranged are not covered by this.
+	 */
+	static final Set<Integer> SPLASH_WEAPONS = Set.of(
+		ItemID.GOBLINRAID_WARHAMMER,
+		ItemID.HW16_REWARD_KNIFE,
+		ItemID.EASTER20_CARROT_SWORD,
+		ItemID.XMAS22_NUTCRACKER_STAFF01,
+		ItemID.XMAS22_NUTCRACKER_STAFF02
+	);
+
+	static boolean isSplashWeapon(int itemId)
+	{
+		return SPLASH_WEAPONS.contains(itemId);
+	}
+
 	static boolean isHarpoon(int itemId)
 	{
 		return HARPOONS.contains(itemId);

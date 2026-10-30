@@ -8,7 +8,10 @@ import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.Client;
+import net.runelite.api.EquipmentInventorySlot;
 import net.runelite.api.GameState;
+import net.runelite.api.Item;
+import net.runelite.api.ItemContainer;
 import net.runelite.api.Menu;
 import net.runelite.api.MenuEntry;
 import net.runelite.api.NPC;
@@ -19,6 +22,7 @@ import net.runelite.api.WorldType;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.gameval.InterfaceID;
+import net.runelite.api.gameval.InventoryID;
 import net.runelite.api.gameval.VarPlayerID;
 import net.runelite.api.gameval.VarbitID;
 import net.runelite.api.widgets.Widget;
@@ -83,7 +87,7 @@ public class DangerSettingsService
 		observeCurrentMenu();
 		state.setAutoRetaliateOn(isAutoRetaliateOn());
 		state.setPlayerAttackOptionsOn(isPlayerAttackOptionsOn());
-		state.setNpcAttackOptionsOn(isNpcAttackOptionsOn());
+		state.setNpcAttackOptionsOn(shouldWarnNpcAttack(isNpcAttackOptionsOn(), wornWeaponId()));
 		notifyAlerts();
 	}
 
@@ -139,7 +143,7 @@ public class DangerSettingsService
 		{
 			npcAttackFromMenu = sawAttack;
 			npcMenuAt = Instant.now();
-			state.setNpcAttackOptionsOn(sawAttack);
+			state.setNpcAttackOptionsOn(shouldWarnNpcAttack(sawAttack, wornWeaponId()));
 			notifyAlerts();
 		}
 	}
@@ -229,6 +233,23 @@ public class DangerSettingsService
 		}
 		return worldTypes == null
 			|| !(WorldType.isPvpWorld(worldTypes) || worldTypes.contains(WorldType.PVP_ARENA));
+	}
+
+	/** A wielded splash weapon makes NPC Attack options harmless, so only that warning is muted. */
+	static boolean shouldWarnNpcAttack(boolean optionsOn, int weaponId)
+	{
+		return optionsOn && !SafetyIds.isSplashWeapon(weaponId);
+	}
+
+	private int wornWeaponId()
+	{
+		ItemContainer worn = client.getItemContainer(InventoryID.WORN);
+		if (worn == null)
+		{
+			return -1;
+		}
+		Item weapon = worn.getItem(EquipmentInventorySlot.WEAPON.getSlotIdx());
+		return weapon == null ? -1 : weapon.getId();
 	}
 
 	private void observeCurrentMenu()
